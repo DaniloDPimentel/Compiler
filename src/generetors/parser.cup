@@ -1,0 +1,331 @@
+package sintatico;
+
+import java_cup.runtime.*;
+import lexical.*;
+import java.util.ArrayList;
+
+parser code  {:
+ public void report_error(String message, Object info){
+   StringBuffer m = new StringBuffer("Error ");
+
+   if (info instanceof java_cup.runtime.Symbol)
+     m.append( "("+info.toString()+")" );
+
+   m.append(" : "+message);
+
+   System.out.println(m);
+ }
+
+ public void report_fatal_error(String message, Object info) {
+   report_error(message, info);
+   throw new RuntimeException("Fatal Syntax Error");
+ }
+:};
+
+terminal BOOLEAN, BYTE, SHORT, INT, LONG, CHAR, FLOAT, DOUBLE;
+terminal DOT, SEMICOLON, MULT, COMMA, LBRACE, RBRACE, EQ, LPAREN, RPAREN, COLON;
+terminal PACKAGE, IMPORT, PUBLIC, PROTECTED, PRIVATE, THREADSAFE, STATIC, ABSTRACT, FINAL, NATIVE, SYNCHRONIZED, TRANSIENT;
+terminal CLASS, EXTENDS, IMPLEMENTS, THIS, SUPER, INTERFACE; 
+terminal IF, ELSE, SWITCH, CASE, DEFAULT, DO, WHILE, FOR, BREAK, CONTINUE, RETURN, THROW, TRY, CATCH, FINALLY, NEW;
+terminal PLUSPLUS, MINUSMINUS, PLUS, MINUS, NOT, DIV, MOD;
+terminal LBRACK, RBRACK, LSHIFT, RSHIFT, URSHIFT, LT, GT, LTEQ, GTEQ, INSTANCEOF;
+terminal EQEQ, NOTEQ, XOR, OR, OROREQ, QUESTION;
+terminal MULTEQ, DIVEQ, MODEQ, PLUSEQ, MINUSEQ, RSHIFTEQ, XOREQ, OREQ, TIO;
+terminal AMPERSAND, AMPERSANDEQ, AMPERSANDAMPERSAND, INTEGER_LITERAL,FLOAT_LITERAL;
+
+
+terminal java.lang.Boolean BOOLEAN_LITERAL;
+terminal java.lang.Character CHARACTER_LITERAL;
+terminal java.lang.String STRING_LITERAL;
+terminal java.lang.String IDENTIFIER;
+terminal NULL;
+
+non terminal compilation_unit, import_statement_aux, modifier_aux,extends_declaration,interface_name_aux;
+non terminal interface_name_loop, statement_block_aux, type_declaration, class_declaration, modifier;
+non terminal package_name, class_name, interface_name;
+non terminal field_declaration, field_declaration_loop;
+non terminal method_declaration, constructor_declaration, variable_declaration, static_initializer;
+non terminal import_statement;
+non terminal type, type_specifier, interface_declaration;
+non terminal statement, statement_block;
+non terminal brack;
+non terminal parameter, parameter_list;
+non terminal variable_declarator;
+non terminal variable_initializer;
+non terminal if_statement,else_opcional;
+non terminal expression;
+non terminal do_statement, while_statement, for_statement;
+non terminal try_statement;
+non terminal switch_statement;
+non terminal numeric_expression, testing_expression, logical_expression, string_expression;
+non terminal bit_expression, casting_expression, creating_expression, literal_expression;
+non terminal package_statement;
+non terminal attribution;
+non terminal bracks,parameter_aux,statement_block_loop,expression_aux;
+non terminal identifier_aux,variable_declaration_aux,variable_initializer_aux,variable_initializer_aux_loop;
+non terminal comma_opcional,expression_opcionais,arglist_opcional,arglist;
+non terminal decl_for,catch_aux,finally_opcional,switch_loop,switch_aux,signal_options,signal_opt;
+non terminal numeric_operators, boolean_operators,logical_operators, string_operators,bit_operators;
+non terminal creating_expression_aux, creating_expression_opcional;
+
+start with compilation_unit;
+
+compilation_unit ::= package_statement import_statement type_declaration;
+   
+package_statement ::= 
+						| PACKAGE package_name SEMICOLON;                       {:Logger.print("Line 76");:}      
+	
+import_statement ::= IMPORT package_name DOT MULT SEMICOLON |
+						IMPORT import_statement_aux SEMICOLON ;
+						
+import_statement_aux ::= class_name |
+						interface_name ;
+				
+type_declaration ::= class_declaration |                                                      
+						interface_declaration ;
+						
+class_declaration ::=
+    modifier_aux CLASS IDENTIFIER                                                                                                              
+    extends_declaration 
+	interface_name_aux                                                                      
+    LBRACE field_declaration_loop RBRACE ;                                                                             
+
+extends_declaration ::=
+						| EXTENDS class_name ;
+	
+interface_name_aux ::=                                              
+    | IMPLEMENTS interface_name_loop ;
+	
+interface_name_loop ::= interface_name
+						| interface_name COMMA interface_name_loop;
+				
+class_name ::= IDENTIFIER
+						| package_name DOT IDENTIFIER;
+						
+interface_name ::= IDENTIFIER
+						| package_name DOT IDENTIFIER;
+
+interface_declaration ::= 
+						modifier_aux INTERFACE IDENTIFIER 
+						extends_declaration
+						LBRACE field_declaration_loop RBRACE;
+						
+field_declaration_loop ::= 
+							| field_declaration field_declaration_loop;
+	
+field_declaration ::= 
+					| method_declaration 
+					| constructor_declaration
+					| variable_declaration
+					| static_initializer
+					| SEMICOLON;
+					
+method_declaration ::= modifier_aux type IDENTIFIER LPAREN parameter_list RPAREN
+						statement_block_aux;
+					
+statement_block_aux ::= statement_block 
+					| SEMICOLON ;
+					
+type ::= type_specifier
+		| bracks;
+		
+bracks ::=  
+		| brack bracks;
+		
+brack ::= LBRACK RBRACK;
+
+parameter_list ::= 
+					| parameter_aux;
+				
+parameter_aux ::= parameter	
+					| parameter COMMA parameter_aux;
+					
+parameter ::= type IDENTIFIER bracks;
+
+statement_block ::= LBRACE RBRACE
+					| LBRACE statement_block_loop RBRACE;
+					
+statement_block_loop ::= statement
+						| statement statement_block_loop;
+						
+statement ::= variable_declaration
+				| expression SEMICOLON
+				| statement_block
+				| if_statement
+				| do_statement
+				| while_statement
+				| for_statement
+				| try_statement
+				| switch_statement
+				| SYNCHRONIZED LPAREN expression RPAREN statement
+				| RETURN expression_aux SEMICOLON
+				| THROW expression SEMICOLON
+				| IDENTIFIER COLON statement
+				| BREAK identifier_aux SEMICOLON
+				| CONTINUE identifier_aux SEMICOLON
+				| SEMICOLON;
+
+expression_aux ::= 
+				| expression ;
+				
+identifier_aux ::= 
+				| IDENTIFIER ;
+				
+constructor_declaration ::= modifier_aux IDENTIFIER LPAREN parameter_list RPAREN
+							statement_block ;
+							
+variable_declaration ::= modifier_aux type variable_declaration_aux SEMICOLON ;
+
+variable_declaration_aux ::= variable_declarator
+								| variable_declarator COMMA variable_declaration_aux ;
+								
+variable_declarator ::= IDENTIFIER bracks attribution ;
+
+attribution ::= 
+				| EQ variable_initializer ;
+				
+variable_initializer ::= expression 
+							| LBRACE variable_initializer_aux RBRACE ;
+							
+variable_initializer_aux ::= 
+								| variable_initializer_aux_loop comma_opcional ;
+								
+variable_initializer_aux_loop ::= 
+									| variable_initializer
+									| variable_initializer COMMA variable_initializer_aux_loop ;
+								
+comma_opcional ::= 
+					| COMMA ;
+
+static_initializer ::= STATIC statement_block ;
+
+expression ::= numeric_expression
+				| testing_expression
+				| logical_expression
+				| string_expression
+				| bit_expression
+				| casting_expression
+				| creating_expression
+				| literal_expression
+				| NULL
+				| SUPER
+				| THIS
+				| IDENTIFIER
+				| LPAREN expression RPAREN
+				| expression expression_opcionais ;
+
+expression_opcionais ::= LPAREN arglist_opcional RPAREN
+						| LBRACK expression RBRACK
+						| DOT expression
+						| COMMA expression
+						| INSTANCEOF import_statement_aux ;
+
+arglist_opcional ::= 
+						| arglist ;
+
+if_statement ::= IF LPAREN expression RPAREN statement else_opcional ;
+
+else_opcional ::= 
+					| ELSE statement ;
+
+do_statement ::= DO statement WHILE LPAREN expression RPAREN SEMICOLON ;
+
+while_statement ::= WHILE LPAREN expression RPAREN statement ;
+
+for_statement ::= FOR LPAREN decl_for expression_aux SEMICOLON expression_aux SEMICOLON RPAREN statement ;
+
+decl_for ::= variable_declaration
+				| expression SEMICOLON
+				| SEMICOLON ;
+
+try_statement ::= TRY statement catch_aux finally_opcional ;
+
+catch_aux ::= 
+				| CATCH LPAREN parameter RPAREN statement catch_aux ;
+
+finally_opcional ::= 
+					| FINALLY statement ;
+					
+switch_statement ::= SWITCH LPAREN expression RPAREN LBRACE switch_loop RBRACE ;
+
+switch_loop ::= 
+				| switch_aux switch_loop ;
+
+switch_aux ::= CASE expression COLON 
+				| DEFAULT COLON
+				| statement ;
+
+numeric_expression ::= signal_options expression
+						| expression signal_opt
+						| expression numeric_operators expression ;
+
+signal_options ::= MINUS
+					| PLUSPLUS
+					| MINUSMINUS ;
+					
+signal_opt ::= PLUSPLUS
+				| MINUSMINUS ;
+				
+numeric_operators ::= PLUS | PLUSEQ | MINUS | MINUSEQ | MULT | MULTEQ | DIV | DIVEQ | MOD | MODEQ ;
+
+testing_expression ::= 	expression boolean_operators expression ;				
+
+boolean_operators ::= GT | LT | GTEQ | LTEQ | EQEQ | NOTEQ ; 
+
+logical_expression ::= NOT expression 
+						| expression logical_operators expression
+						| expression QUESTION expression COLON expression
+						| BOOLEAN_LITERAL ;
+						
+logical_operators ::= AMPERSAND | AMPERSANDEQ | OR | OREQ | XOR | XOREQ | AMPERSANDAMPERSAND | OROREQ | MOD | MODEQ ;
+
+string_expression ::= expression string_operators expression ;
+
+string_operators ::= PLUS | PLUSEQ ;
+
+bit_expression ::= TIO expression 
+					| expression bit_operators expression ;
+					
+bit_operators ::= RSHIFTEQ | LSHIFT | RSHIFT | URSHIFT ;
+
+casting_expression ::= LPAREN type RPAREN expression ;
+
+creating_expression ::= NEW creating_expression_aux ;
+
+creating_expression_aux ::= class_name LPAREN arglist_opcional RPAREN
+							| type_specifier creating_expression_opcional bracks 
+							| LPAREN expression RPAREN ;
+
+creating_expression_opcional ::= 
+									| LBRACK expression RBRACK ;
+									
+literal_expression ::= INTEGER_LITERAL 
+						| FLOAT_LITERAL
+						| STRING_LITERAL
+						| CHARACTER_LITERAL ;
+						
+arglist ::=  expression
+			| COMMA expression arglist ;
+			
+type_specifier ::= BOOLEAN | BYTE | CHAR | SHORT | INT | FLOAT | LONG | DOUBLE | class_name | interface_name ;
+
+package_name ::= IDENTIFIER 
+					| package_name DOT IDENTIFIER ;
+						
+modifier_aux ::= 
+					| modifier modifier_aux;
+					
+modifier ::= PUBLIC 
+			| PRIVATE 
+			| PROTECTED 
+			| STATIC 
+			| FINAL
+			| NATIVE 
+			| SYNCHRONIZED 
+			| ABSTRACT 
+			| THREADSAFE 
+			| TRANSIENT ;
+						
+						
+						
+						
