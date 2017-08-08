@@ -39,13 +39,6 @@ public class Expression {
 	public void setContext(String context){
 		this.context = context;
 	}
-	public boolean isNumeric() {
-		return    getType().getName().equals("int")
-				||getType().getName().equals("float")
-				||getType().getName().equals("long")
-				||getType().getName().equals("double")
-				||getType().getName().equals("Integer");
-	}
 
     public boolean isString() {
 		System.out.println("##################");

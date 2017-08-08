@@ -2,6 +2,7 @@ package sintatico;
 
 import java_cup.runtime.*;
 import lexical.*;
+import util.*;
 import java.util.ArrayList;
 
 parser code  {:
@@ -40,7 +41,7 @@ terminal java.lang.String STRING_LITERAL;
 terminal java.lang.String IDENTIFIER;
 terminal NULL;
 
-non terminal compilation_unit, import_statement_aux, modifier_aux,extends_declaration,interface_name_aux;
+non terminal compilation_unit, import_statement_loop, import_statement_aux, modifier_aux,extends_declaration,interface_name_aux;
 non terminal interface_name_loop, statement_block_aux, type_declaration, class_declaration, modifier;
 non terminal package_name, class_name, interface_name;
 non terminal field_declaration, field_declaration_loop;
@@ -68,18 +69,26 @@ non terminal decl_for,catch_aux,finally_opcional,switch_loop,switch_aux,signal_o
 non terminal numeric_operators, boolean_operators,logical_operators, string_operators,bit_operators;
 non terminal creating_expression_aux, creating_expression_opcional;
 
-start with compilation_unit;
+start with compilation_unit;													 
 
-compilation_unit ::= package_statement import_statement type_declaration;
+compilation_unit ::= package_statement import_statement type_declaration			{: System.out.println("Line 73"); :}  
+;
    
 package_statement ::= 
-						| PACKAGE package_name SEMICOLON;                       {:Logger.print("Line 76");:}      
+						| PACKAGE package_name SEMICOLON							{: System.out.println("Line 77"); :}
+;                            
 	
-import_statement ::= IMPORT package_name DOT MULT SEMICOLON |
-						IMPORT import_statement_aux SEMICOLON ;
-						
-import_statement_aux ::= class_name |
-						interface_name ;
+import_statement_loop ::=
+    import_statement                                                        {:System.out.println("81");:}
+    | import_statement import_statement_loop                                {:System.out.println("82");:}
+;	
+	
+import_statement ::= IMPORT import_statement_aux SEMICOLON 						{: System.out.println("Line 86"); :}	
+					;
+										
+import_statement_aux ::= package_name DOT MULT
+						| package_name
+ ;
 				
 type_declaration ::= class_declaration |                                                      
 						interface_declaration ;
@@ -163,7 +172,8 @@ statement ::= variable_declaration
 				| IDENTIFIER COLON statement
 				| BREAK identifier_aux SEMICOLON
 				| CONTINUE identifier_aux SEMICOLON
-				| SEMICOLON;
+				| SEMICOLON
+				;
 
 expression_aux ::= 
 				| expression ;
@@ -174,17 +184,23 @@ identifier_aux ::=
 constructor_declaration ::= modifier_aux IDENTIFIER LPAREN parameter_list RPAREN
 							statement_block ;
 							
-variable_declaration ::= modifier_aux type variable_declaration_aux SEMICOLON ;
+variable_declaration ::= modifier_aux type:t variable_declaration_aux:v SEMICOLON 									{:System.out.println("Line 187"); SemanticUtil.getInstance().addVariableType((Type) t);RESULT=v;:}
+;
 
-variable_declaration_aux ::= variable_declarator
-								| variable_declarator COMMA variable_declaration_aux ;
+variable_declaration_aux ::= variable_declarator:v																	{:System.out.println("Line 190"); SemanticUtil.getInstance().addVariable((Variable)v); RESULT = v;:}
+								| variable_declarator:v COMMA variable_declaration_aux 								{:System.out.println("Line 191"); SemanticUtil.getInstance().addVariable((Variable)v); RESULT = v;:}
+								;
 								
-variable_declarator ::= IDENTIFIER bracks attribution ;
+variable_declarator ::= IDENTIFIER:i bracks attribution:exp 															{:System.out.println("Line 194");
+																													Variable var = new Variable((String) i, new Type("null"), (Expression) exp);
+																													RESULT = var;:}		
+;
 
 attribution ::= 
-				| EQ variable_initializer ;
+				| EQ variable_initializer:exp																		{:System.out.println("Line 194"); RESULT = exp;:}
+				;
 				
-variable_initializer ::= expression 
+variable_initializer ::= expression:e 																	{:System.out.println("Line 202"); RESULT = e;:}
 							| LBRACE variable_initializer_aux RBRACE ;
 							
 variable_initializer_aux ::= 
@@ -199,20 +215,21 @@ comma_opcional ::=
 
 static_initializer ::= STATIC statement_block ;
 
-expression ::= numeric_expression
-				| testing_expression
-				| logical_expression
-				| string_expression
-				| bit_expression
-				| casting_expression
-				| creating_expression
-				| literal_expression
-				| NULL
-				| SUPER
-				| THIS
-				| IDENTIFIER
-				| LPAREN expression RPAREN
-				| expression expression_opcionais ;
+expression ::= numeric_expression:ne									{:System.out.println("Line 204"); RESULT = ne;:}
+				| testing_expression:te									{:System.out.println("Line 205"); RESULT = te;:}
+				| logical_expression:loe								{:System.out.println("Line 206"); RESULT = loe;:}
+				| string_expression:se									{:System.out.println("Line 207"); RESULT = se;:}
+				| bit_expression:be										{:System.out.println("Line 208"); RESULT = be;:}
+				| casting_expression:cae								{:System.out.println("Line 209"); RESULT = cae;:}
+				| creating_expression:cre								{:System.out.println("Line 210"); RESULT = cre;:}
+				| literal_expression:lie								{:System.out.println("Line 211"); RESULT = lie;:}
+				| NULL:nul												{:System.out.println("Line 212"); RESULT = nul;:}
+				| SUPER:sp												{:System.out.println("Line 213"); RESULT = sp;:}
+				| THIS:th												{:System.out.println("Line 214"); RESULT = th;:}
+				| IDENTIFIER:i											{:System.out.println("Line 215"); RESULT = i;:}
+				| LPAREN expression:e RPAREN							{:System.out.println("Line 216"); RESULT = e;:}
+				| expression:e expression_opcionais:eop 				{:System.out.println("Line 217"); RESULT = e;:}
+				;
 
 expression_opcionais ::= LPAREN arglist_opcional RPAREN
 						| LBRACK expression RBRACK
@@ -246,12 +263,13 @@ catch_aux ::=
 finally_opcional ::= 
 					| FINALLY statement ;
 					
-switch_statement ::= SWITCH LPAREN expression RPAREN LBRACE switch_loop RBRACE ;
+switch_statement ::= SWITCH LPAREN expression:e RPAREN LBRACE switch_loop RBRACE                        {: System.out.println("Line 254"); SemanticUtil.getInstance().checkSwitchExpression((Expression)e); RESULT=e; :}       
+						;
 
 switch_loop ::= 
 				| switch_aux switch_loop ;
 
-switch_aux ::= CASE expression COLON 
+switch_aux ::= CASE expression:e COLON 																	{: System.out.println("Line 260"); SemanticUtil.getInstance().checkSwitchExpression((Expression)e); RESULT=e; :} 
 				| DEFAULT COLON
 				| statement ;
 
@@ -266,22 +284,49 @@ signal_options ::= MINUS
 signal_opt ::= PLUSPLUS
 				| MINUSMINUS ;
 				
-numeric_operators ::= PLUS | PLUSEQ | MINUS | MINUSEQ | MULT | MULTEQ | DIV | DIVEQ | MOD | MODEQ ;
+numeric_operators ::= PLUS 													{:RESULT= new Node("+","primary", "PLUS");:}
+						| PLUSEQ 											{:RESULT= new Node("+=","primary", "PLUSEQ");:}
+						| MINUS 											{:RESULT= new Node("-","primary", "MINUS");:}
+						| MINUSEQ 											{:RESULT= new Node("-=","primary", "MINUSEQ");:}
+						| MULT 												{:RESULT= new Node("*","primary", "MULT");:}
+						| MULTEQ 											{:RESULT= new Node("*=","primary", "MULTEQ");:}
+						| DIV 												{:RESULT= new Node("/","primary", "DIV");:}
+						| DIVEQ 											{:RESULT= new Node("/=","primary", "DIVEQ");:}
+						| MOD 												{:RESULT= new Node("%","primary", "MOD");:}
+						| MODEQ 											{:RESULT= new Node("%=","primary", "MODEQ");:}
+						;
 
 testing_expression ::= 	expression boolean_operators expression ;				
 
-boolean_operators ::= GT | LT | GTEQ | LTEQ | EQEQ | NOTEQ ; 
-
+boolean_operators ::= GT 													{:RESULT = new Node(">","primary", "GT");:}
+						| LT 												{:RESULT= new Node("<","primary", "LT");:}
+						| GTEQ 												{:RESULT= new Node(">=","primary", "GTEQ");:}
+						| LTEQ 												{:RESULT= new Node("<=","primary", "LTEQ");:}
+						| EQEQ 												{:RESULT= new Node("==","primary", "EQEQ");:}
+						| NOTEQ  											{:RESULT= new Node("!=","primary", "NOTEQ");:}
+						;
+						
 logical_expression ::= NOT expression 
 						| expression logical_operators expression
 						| expression QUESTION expression COLON expression
 						| BOOLEAN_LITERAL ;
 						
-logical_operators ::= AMPERSAND | AMPERSANDEQ | OR | OREQ | XOR | XOREQ | AMPERSANDAMPERSAND | OROREQ | MOD | MODEQ ;
+logical_operators ::= AMPERSAND 											{:RESULT = new Node("&","primary", "AMPERSAND");:}
+						| AMPERSANDEQ 										{:RESULT = new Node("&=","primary", "AMPERSANDEQ");:}
+						| OR 												{:RESULT = new Node("|","primary", "OR");:}
+						| OREQ 												{:RESULT = new Node("|=","primary", "OREQ");:}
+						| XOR 												{:RESULT = new Node("^","primary", "XOR");:}
+						| XOREQ 											{:RESULT = new Node("^=","primary", "XOREQ");:}
+						| AMPERSANDAMPERSAND 								{:RESULT = new Node("&&","primary", "AMPERSANDAMPERSAND");:}
+						| OROREQ 											{:RESULT = new Node("||=","primary", "OROREQ");:}
+						| MOD 												{:RESULT = new Node("%","primary", "MOD");:}
+						| MODEQ 											{:RESULT = new Node("%=","primary", "MODEQ");:}
+						;
 
 string_expression ::= expression string_operators expression ;
 
-string_operators ::= PLUS | PLUSEQ ;
+string_operators ::= PLUS 
+					| PLUSEQ ;
 
 bit_expression ::= TIO expression 
 					| expression bit_operators expression ;
@@ -299,15 +344,26 @@ creating_expression_aux ::= class_name LPAREN arglist_opcional RPAREN
 creating_expression_opcional ::= 
 									| LBRACK expression RBRACK ;
 									
-literal_expression ::= INTEGER_LITERAL 
-						| FLOAT_LITERAL
-						| STRING_LITERAL
-						| CHARACTER_LITERAL ;
+literal_expression ::= INTEGER_LITERAL:i													{:RESULT = new Expression(new Type("int"), i.toString()); System.out.println("Line 335");:}
+						| FLOAT_LITERAL:flt												{:RESULT = new Expression(new Type("float"), flt.toString()); System.out.println("Line 336");:}
+						| STRING_LITERAL:str												{:RESULT = new Expression(new Type("string"), str.toString()); System.out.println("Line 337");:}
+						| CHARACTER_LITERAL:chr											{:RESULT = new Expression(new Type("char"), chr.toString()); System.out.println("Line 338");:}
+						;
 						
 arglist ::=  expression
 			| COMMA expression arglist ;
 			
-type_specifier ::= BOOLEAN | BYTE | CHAR | SHORT | INT | FLOAT | LONG | DOUBLE | class_name | interface_name ;
+type_specifier ::= BOOLEAN 												{:RESULT = new Type("boolean");:}
+					| BYTE 												{:RESULT = new Type("byte");:}
+					| CHAR 												{:RESULT = new Type("char");:}
+					| SHORT 											{:RESULT = new Type("short");:}
+					| INT 												{:RESULT = new Type("int");:}
+					| FLOAT 											{:RESULT = new Type("float");:}
+					| LONG 												{:RESULT = new Type("long");:}
+					| DOUBLE 											{:RESULT = new Type("double");:}
+					| class_name:cn 									{:Type t = new Type((String) cn); RESULT = t;:}
+					| interface_name:in 								{:Type t = new Type((String) in); RESULT = t;:}
+;
 
 package_name ::= IDENTIFIER 
 					| package_name DOT IDENTIFIER ;

@@ -3,15 +3,16 @@ package Tests;
 import main.*;
 
 
-public class Test implements Tests {
-    public boolean beginTest(){
-		boolean a = true;
-		if (1 > 2) {
+public class ClasseTest implements Tests {
+    
+    public boolean funcaoTest(int danilo, int dan){
+		int a = 3;
+		if (1 > B) {
 		
 		}
 		
 		int num = 3;
-		int num2 = num;
+		
 		switch (3){
 		case 1:
 			break;
@@ -22,6 +23,8 @@ public class Test implements Tests {
 		
 		
 		}
+		
+		return 3;
 		
 	}
 

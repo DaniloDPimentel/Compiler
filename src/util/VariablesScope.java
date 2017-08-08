@@ -3,13 +3,14 @@ package util;
 import java.util.HashMap;
 import java.util.Map;
 
-public class VariablesScope  {
+public class VariablesScope extends NamedEntity {
 
     private HashMap<String, Variable> variables;
     private HashMap<String, Type> types;
 
     public VariablesScope(String name) {
-        variables = new HashMap<String, Variable>();
+        super(name);
+    	variables = new HashMap<String, Variable>();
     }
 
     public Map<String, Variable> getVariable() {
