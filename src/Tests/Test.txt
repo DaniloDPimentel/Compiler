@@ -4,52 +4,36 @@ import main.*;
 
 
 public class ClasseTest implements Tests {
-    
+       
+     public int funcaoTest2(int danilo2, int dan1){
+		int a = 2;
+
+		switch (3){
+			case 1:
+				break;
+			case 3: continue;
+		}
+		return a;
+	}
     public boolean funcaoTest(int danilo, int dan){
 		int a = 3;
 		int B = 5;
+		
 		if (1 > B) {
 		
 		}
 		
-		switch (B){	
-		}
 		
 		int num = 3;
 		
-		
 		switch (num){
-		case 1:
-			break;
-		case 3:
-			break;
-		default:
-			break;
-		
-		
+			case 1:
+				break;
+			case 3: continue;
+			
 		}
+		
 	}
-
-    public boolean funcaoTest2(){
-    		int a = 3;
-		int B = 5;
-		
-		if (1 > B) {
-		
-		}
-		
-				switch (num){
-		case 1:
-			break;
-		case 3:
-			break;
-		default:
-			break;
-		
-		
-		}
-	}
-	
 
 
 }

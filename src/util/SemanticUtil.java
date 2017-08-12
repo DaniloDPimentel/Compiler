@@ -82,15 +82,27 @@ public class SemanticUtil {
     }
     
     public void checkSwitchExpression(Expression e) throws Exception{
+    	
     	if (e == null){
     		return;
     	}
-    	
     	if (!(e.getType().getName().equals("int")
 				||e.getType().getName().equals("long")
 				||e.getType().getName().equals("Integer"))) {
             throw new Exception("SWITCH CASE COM ERRO. A expressão de tipo: " + e.getType() + ", e valor: " + e.getValue() + " não são numericos");
         }
+
+    }
+    
+    
+    public void checkSwitchExpression(Object e) throws Exception{
+    	if (e == null){
+    		return;
+    	}
+    	
+    	if (!checkVariableExistence(e.toString())){
+            throw new Exception("Variavel nao declarada: " + e );
+    	}
     }
     
     public void addVariableType(Type type) throws Exception{
@@ -199,6 +211,15 @@ public class SemanticUtil {
         }
     }
     
+    public Object validateCallMethod(Expression e, Expression eop) throws Exception{
+        Object result = null;
+    	
+    	if (true){
+            throw new Exception("ERRO: A variavel: foi declarada!");
+        }
+        return result;
+    }
+    
     public Variable findVariableByIdentifier(String variableName){
         if(!variablesStackScope.isEmpty() && getCurrentScope().getVariable().get(variableName) != null){
             return getCurrentScope().getVariable().get(variableName);
@@ -261,8 +282,10 @@ public class SemanticUtil {
     	}
     	    	
     	if (!e.getType().equals(tmp.getDeclaredReturnType()))
-    		 throw new Exception("ERRO FUNCTION: O tipo de retorno: <"+ tmp.getDeclaredReturnType() +"> não pode ser associado ao metodo de tipo: <" + e.getType() + ">.");
+    		 throw new Exception("ERRO FUNCTION: O tipo de retorno: <"+ e.getType() +"> não pode ser associado ao metodo de tipo: <" + tmp.getDeclaredReturnType() + ">.");
     }
+    
+    
     
     public void addFunctionAndNewScope(Function f) throws Exception {
         functions.add(f);
@@ -320,9 +343,49 @@ public class SemanticUtil {
 		return listParams;
 	}
 	
+    public boolean checkObject(Object e) throws Exception {
+		boolean result = true;
+    	try{
+    		( (Expression) e).getType();
+		}
+    	catch (Exception a){
+			result = false;
+		}
+    	    	
+    	return result;
+    	
+    }
 	
+    public boolean checkObjectReturn(Object e) throws Exception {
+		boolean result = true;
+    	try{
+    		( (Expression) e).getType();
+		}
+    	catch (Exception a){
+			result = false;
+		}
+    	
+    	checkVariableReturn(e);
+    	
+    	return result;
+    	
+    }
+    
+    public void  checkVariableReturn(Object e) throws Exception {
+		boolean result = true;
 
+    	Variable var = findVariableByIdentifier(e.toString());
+    	
+    	Function tmp = null;
+    	for (Function f : functions){
+    		tmp = f;
+    	}
+    	    	
+    	if (!var.getType().equals(tmp.getDeclaredReturnType()))
+    		 throw new Exception("ERRO FUNCTION: O tipo de retorno: <"+ var.getType() +"> não pode ser associado ao metodo de tipo: <" + tmp.getDeclaredReturnType() + ">.");
+
+    	
+    }
     
-	
-    
+
 }

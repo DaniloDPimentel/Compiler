@@ -144,14 +144,14 @@ bracks ::=
 brack ::= LBRACK RBRACK;
 
 parameter_list ::= 
-					| parameter_aux:pa															{:System.out.println("Line 146"); RESULT=pa;:}
+					| parameter_aux:pa															{:System.out.println("Line 147"); RESULT=pa;:}
 					;
 				
-parameter_aux ::= parameter:p																	{:System.out.println("Line 146"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
-					| parameter:p COMMA parameter_aux:pa										{:System.out.println("Line 146"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
+parameter_aux ::= parameter:p																	{:System.out.println("Line 150"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
+					| parameter:p COMMA parameter_aux:pa										{:System.out.println("Line 151"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
 					;
 					
-parameter ::= type:t IDENTIFIER:i bracks														{:System.out.println("Line 146"); RESULT = new Variable(i, (Type)t);:}
+parameter ::= type:t IDENTIFIER:i bracks														{:System.out.println("Line 154"); RESULT = new Variable(i, (Type)t);:}
 		;
 
 statement_block ::= LBRACE RBRACE
@@ -172,7 +172,7 @@ statement ::= variable_declaration
 				| try_statement
 				| switch_statement
 				| SYNCHRONIZED LPAREN expression RPAREN statement
-				| RETURN expression_aux:e SEMICOLON												{:System.out.println("Line 173"); ((Expression) e).setContext("return"); SemanticUtil.getInstance().checkMethodReturn((Expression)e) ;RESULT = e;:}
+				| RETURN expression_aux:e SEMICOLON												{:System.out.println("Line 173"); if (SemanticUtil.getInstance().checkObject(e)){ ((Expression) e).setContext("return"); SemanticUtil.getInstance().checkMethodReturn((Expression)e) ;RESULT = e; } :}
 				| THROW expression SEMICOLON
 				| IDENTIFIER COLON statement
 				| BREAK identifier_aux SEMICOLON
@@ -232,7 +232,7 @@ expression ::= numeric_expression:ne									{:System.out.println("Line 204"); R
 				| NULL:nul												{:System.out.println("Line 212"); RESULT = nul;:}
 				| SUPER:sp												{:System.out.println("Line 213"); RESULT = sp;:}
 				| THIS:th												{:System.out.println("Line 214"); RESULT = th;:}
-				| IDENTIFIER:i											{:System.out.println("Line 215"); RESULT = i;:}
+				| IDENTIFIER:i											{:System.out.println("Line 215"); SemanticUtil.getInstance().validateVariableName(i); RESULT=i; :}
 				| LPAREN expression:e RPAREN							{:System.out.println("Line 216"); RESULT = e;:}
 				| expression:e expression_opcionais:eop 				{:System.out.println("Line 217"); RESULT = e;:}
 				;
@@ -269,7 +269,7 @@ catch_aux ::=
 finally_opcional ::= 
 					| FINALLY statement ;
 					
-switch_statement ::= SWITCH LPAREN expression:e RPAREN LBRACE switch_loop RBRACE                        {: System.out.println("Line 254"); SemanticUtil.getInstance().checkSwitchExpression((Expression)e); RESULT=e; :}       
+switch_statement ::= SWITCH LPAREN expression:e RPAREN LBRACE switch_loop RBRACE                        {: System.out.println("Line 272"); if (SemanticUtil.getInstance().checkObject(e)){ SemanticUtil.getInstance().checkSwitchExpression((Expression)e); RESULT=e; } :}       
 						;
 
 switch_loop ::= 
