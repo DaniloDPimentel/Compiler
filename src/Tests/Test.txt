@@ -7,13 +7,18 @@ public class ClasseTest implements Tests {
     
     public boolean funcaoTest(int danilo, int dan){
 		int a = 3;
+		int B = 5;
 		if (1 > B) {
 		
 		}
 		
+		switch (B){	
+		}
+		
 		int num = 3;
 		
-		switch (3){
+		
+		switch (num){
 		case 1:
 			break;
 		case 3:
@@ -23,10 +28,28 @@ public class ClasseTest implements Tests {
 		
 		
 		}
-		
-		return 3;
-		
 	}
+
+    public boolean funcaoTest2(){
+    		int a = 3;
+		int B = 5;
+		
+		if (1 > B) {
+		
+		}
+		
+				switch (num){
+		case 1:
+			break;
+		case 3:
+			break;
+		default:
+			break;
+		
+		
+		}
+	}
+	
 
 
 }

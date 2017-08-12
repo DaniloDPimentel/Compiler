@@ -129,13 +129,13 @@ field_declaration ::=
 					| static_initializer
 					| SEMICOLON;
 					
-method_declaration ::= modifier_aux type IDENTIFIER LPAREN parameter_list RPAREN
+method_declaration ::= modifier_aux type:t IDENTIFIER:i LPAREN parameter_list:p RPAREN			{:System.out.println("Line 132"); SemanticUtil.getInstance().checkMethod((Type)t, i,(ArrayList<Param>) p);:}
 						statement_block_aux;
 					
 statement_block_aux ::= statement_block 
 					| SEMICOLON ;
 					
-type ::= type_specifier
+type ::= type_specifier:t																		{:System.out.println("Line 138"); RESULT=t;:}
 		| bracks;
 		
 bracks ::=  
@@ -144,18 +144,23 @@ bracks ::=
 brack ::= LBRACK RBRACK;
 
 parameter_list ::= 
-					| parameter_aux;
+					| parameter_aux:pa															{:System.out.println("Line 146"); RESULT=pa;:}
+					;
 				
-parameter_aux ::= parameter	
-					| parameter COMMA parameter_aux;
+parameter_aux ::= parameter:p																	{:System.out.println("Line 146"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
+					| parameter:p COMMA parameter_aux:pa										{:System.out.println("Line 146"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
+					;
 					
-parameter ::= type IDENTIFIER bracks;
+parameter ::= type:t IDENTIFIER:i bracks														{:System.out.println("Line 146"); RESULT = new Variable(i, (Type)t);:}
+		;
 
 statement_block ::= LBRACE RBRACE
-					| LBRACE statement_block_loop RBRACE;
+					| LBRACE statement_block_loop:sbl RBRACE									{:System.out.println("Line 146"); RESULT = sbl;:}
+					;
 					
-statement_block_loop ::= statement
-						| statement statement_block_loop;
+statement_block_loop ::= statement:s															{:System.out.println("Line 161"); RESULT = s;:}
+						| statement:s statement_block_loop										{:System.out.println("Line 162"); RESULT = s;:}
+						;
 						
 statement ::= variable_declaration
 				| expression SEMICOLON
@@ -167,7 +172,7 @@ statement ::= variable_declaration
 				| try_statement
 				| switch_statement
 				| SYNCHRONIZED LPAREN expression RPAREN statement
-				| RETURN expression_aux SEMICOLON
+				| RETURN expression_aux:e SEMICOLON												{:System.out.println("Line 173"); ((Expression) e).setContext("return"); SemanticUtil.getInstance().checkMethodReturn((Expression)e) ;RESULT = e;:}
 				| THROW expression SEMICOLON
 				| IDENTIFIER COLON statement
 				| BREAK identifier_aux SEMICOLON
@@ -176,7 +181,8 @@ statement ::= variable_declaration
 				;
 
 expression_aux ::= 
-				| expression ;
+				| expression:e																	{:System.out.println("Line 183"); RESULT = e;:}
+				;
 				
 identifier_aux ::= 
 				| IDENTIFIER ;
@@ -200,7 +206,7 @@ attribution ::=
 				| EQ variable_initializer:exp																		{:System.out.println("Line 194"); RESULT = exp;:}
 				;
 				
-variable_initializer ::= expression:e 																	{:System.out.println("Line 202"); RESULT = e;:}
+variable_initializer ::= expression:e 																				{:System.out.println("Line 202"); RESULT = e;:}
 							| LBRACE variable_initializer_aux RBRACE ;
 							
 variable_initializer_aux ::= 

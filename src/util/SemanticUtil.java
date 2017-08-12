@@ -82,6 +82,10 @@ public class SemanticUtil {
     }
     
     public void checkSwitchExpression(Expression e) throws Exception{
+    	if (e == null){
+    		return;
+    	}
+    	
     	if (!(e.getType().getName().equals("int")
 				||e.getType().getName().equals("long")
 				||e.getType().getName().equals("Integer"))) {
@@ -186,6 +190,12 @@ public class SemanticUtil {
             return true;
         }else{
             return false;
+        }
+    }
+    
+    public void validateVariableName(String variableName) throws Exception{
+        if (!checkVariableExistence(variableName)){
+            throw new Exception("ERRO: A variavel: " + variableName + " não foi declarada!");
         }
     }
     
@@ -311,7 +321,8 @@ public class SemanticUtil {
 	}
 	
 	
-	
+
+    
 	
     
 }

@@ -144,18 +144,18 @@ bracks ::=
 brack ::= LBRACK RBRACK;
 
 parameter_list ::= 
-					| parameter_aux:pa															{:System.out.println("Line 146"); RESULT=pa;:}
+					| parameter_aux:pa															{:System.out.println("Line 147"); RESULT=pa;:}
 					;
 				
-parameter_aux ::= parameter:p																	{:System.out.println("Line 146"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
-					| parameter:p COMMA parameter_aux:pa										{:System.out.println("Line 146"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
+parameter_aux ::= parameter:p																	{:System.out.println("Line 150"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
+					| parameter:p COMMA parameter_aux:pa										{:System.out.println("Line 151"); RESULT = SemanticUtil.getInstance().addParamList(p);:}
 					;
 					
-parameter ::= type:t IDENTIFIER:i bracks														{:System.out.println("Line 146"); RESULT = new Variable(i, (Type)t);:}
+parameter ::= type:t IDENTIFIER:i bracks														{:System.out.println("Line 154"); RESULT = new Variable(i, (Type)t);:}
 		;
 
 statement_block ::= LBRACE RBRACE
-					| LBRACE statement_block_loop:sbl RBRACE									{:System.out.println("Line 146"); RESULT = sbl;:}
+					| LBRACE statement_block_loop:sbl RBRACE									{:System.out.println("Line 157"); RESULT = sbl;:}
 					;
 					
 statement_block_loop ::= statement:s															{:System.out.println("Line 161"); RESULT = s;:}
@@ -232,7 +232,7 @@ expression ::= numeric_expression:ne									{:System.out.println("Line 204"); R
 				| NULL:nul												{:System.out.println("Line 212"); RESULT = nul;:}
 				| SUPER:sp												{:System.out.println("Line 213"); RESULT = sp;:}
 				| THIS:th												{:System.out.println("Line 214"); RESULT = th;:}
-				| IDENTIFIER:i											{:System.out.println("Line 215"); RESULT = i;:}
+				| IDENTIFIER:i											{:System.out.println("Line 215"); SemanticUtil.getInstance().validateVariableName(i); RESULT=i.toString(); :}
 				| LPAREN expression:e RPAREN							{:System.out.println("Line 216"); RESULT = e;:}
 				| expression:e expression_opcionais:eop 				{:System.out.println("Line 217"); RESULT = e;:}
 				;
