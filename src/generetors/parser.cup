@@ -279,16 +279,18 @@ switch_aux ::= CASE expression:e COLON 																	{: System.out.println("L
 				| DEFAULT COLON
 				| statement ;
 
-numeric_expression ::= signal_options expression
-						| expression signal_opt
-						| expression numeric_operators expression ;
+numeric_expression ::= MINUS expression:e                                      
+						| signal_opt expression:e 														{: System.out.println("Line 283"); SemanticUtil.getInstance().checkNumericExpression((Expression)e); RESULT=e; :}
+						| expression:e signal_opt 														{: System.out.println("Line 284"); SemanticUtil.getInstance().checkNumericExpression((Expression)e); RESULT=e; :}
+						| expression:e1 numeric_operators:no expression:e2								{: System.out.println("Line 285"); 
+																										SemanticUtil.getInstance().checkExpression((Expression)e1,(Expression)e2); 
+																										RESULT=SemanticUtil.getInstance().getExpression((Expression) e1,
+					   												        							Operation.valueOf(((Node) no).getIdentifier()), (Expression) e2); :}
+;					   												        							
 
-signal_options ::= MINUS
-					| PLUSPLUS
-					| MINUSMINUS ;
-					
-signal_opt ::= PLUSPLUS
-				| MINUSMINUS ;
+signal_opt ::= PLUSPLUS                                              {:System.out.println("Line 399"); RESULT = new Node("++","primary", "PLUSPLUS");:}
+               | MINUSMINUS                                          {:System.out.println("Line 400"); RESULT = new Node("--","primary", "MINUSMINUS");:}
+;
 				
 numeric_operators ::= PLUS 													{:RESULT= new Node("+","primary", "PLUS");:}
 						| PLUSEQ 											{:RESULT= new Node("+=","primary", "PLUSEQ");:}
@@ -302,7 +304,13 @@ numeric_operators ::= PLUS 													{:RESULT= new Node("+","primary", "PLUS"
 						| MODEQ 											{:RESULT= new Node("%=","primary", "MODEQ");:}
 						;
 
-testing_expression ::= 	expression boolean_operators expression ;				
+
+
+testing_expression ::= 	expression:e1 boolean_operators:bo expression:e2		{:System.out.println("Line 309");
+																				SemanticUtil.getInstance().checkExpression((Expression) e1, (Expression) e2);
+																				RESULT = SemanticUtil.getInstance().getExpression((Expression) e1,
+					   												        	Operation.valueOf(((Node) bo).getIdentifier()), (Expression) e2);:}	
+;
 
 boolean_operators ::= GT 													{:RESULT = new Node(">","primary", "GT");:}
 						| LT 												{:RESULT= new Node("<","primary", "LT");:}
@@ -329,7 +337,11 @@ logical_operators ::= AMPERSAND 											{:RESULT = new Node("&","primary", "A
 						| MODEQ 											{:RESULT = new Node("%=","primary", "MODEQ");:}
 						;
 
-string_expression ::= expression string_operators expression ;
+string_expression ::= expression:e1 string_operators:so expression:e2 		{:System.out.println("Line 309");
+																			SemanticUtil.getInstance().checkExpression((Expression) e1, (Expression) e2);
+																			RESULT = SemanticUtil.getInstance().getExpression((Expression) e1,
+					   												        Operation.valueOf(((Node) so).getIdentifier()), (Expression) e2);:}	
+;
 
 string_operators ::= PLUS 
 					| PLUSEQ ;

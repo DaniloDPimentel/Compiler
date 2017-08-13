@@ -45,6 +45,13 @@ public class Expression {
         System.out.println(getType().getName());
         return getType().getName().equalsIgnoreCase("String");
     }
+    
+    public boolean isNumeric() {
+		return    getType().getName().equals("int")
+				||getType().getName().equals("float")
+				||getType().getName().equals("long")
+				||getType().getName().equals("double");
+	}
 
 	public String toString(){
 		return "Expression of type; " + getType();

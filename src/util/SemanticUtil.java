@@ -17,17 +17,23 @@ public class SemanticUtil {
 
 
 
-	private Stack<VariablesScope> variablesStackScope = new Stack<VariablesScope>();
+    private Stack<VariablesScope> variablesStackScope = new Stack<VariablesScope>();
     private HashMap<String,Variable> variables = new HashMap<String,Variable>();
-
     private ArrayList<Function> functions = new ArrayList<Function>();
-
+    public static boolean contextFor;
+    public static CodeGenerator codeGenerator;
+    public int forCounter = 0;
+    
+    public CodeGenerator getCodeGenerator() {
+    	return codeGenerator;
+    }
 
 
 	public static SemanticUtil getInstance(){
         if(singleton ==  null){
             singleton = new SemanticUtil();
             initTypeCompatibility();
+            codeGenerator = new CodeGenerator();
         }
         return singleton;
     }
@@ -92,8 +98,7 @@ public class SemanticUtil {
             throw new Exception("SWITCH CASE COM ERRO. A expressão de tipo: " + e.getType() + ", e valor: " + e.getValue() + " não são numericos");
         }
 
-    }
-    
+    }   
     
     public void checkSwitchExpression(Object e) throws Exception{
     	if (e == null){
@@ -103,6 +108,188 @@ public class SemanticUtil {
     	if (!checkVariableExistence(e.toString())){
             throw new Exception("Variavel nao declarada: " + e );
     	}
+    }
+    
+    public boolean checkNumericExpression(Expression e) throws Exception{
+    	if (!e.isNumeric()) {
+			throw new Exception("A expressão " + e.toString() + "não é do tipo numérico.");
+		}
+    	return true;
+    }
+    
+    public boolean checkNumericExpression(Expression e1, Expression e2) throws Exception{
+        if(e1 != null && e1.isNumeric()){
+            if(e2 != null && e2.isNumeric()){
+                return true;
+            }
+        }else if(isStringExpression(e1,e2)){
+            return true;
+        }
+        throw new Exception("ERRO: A expressão '"+ e1.getValue()+ "' com tipo '" + e1.getType().getName() +
+                "' e/ou a expressão " + e2.getValue() + " com tipo '"+ e2.getType().getName()+"' não é expressão numérica ou entre string");
+    }
+    
+    public boolean isStringExpression(Expression e1, Expression e2) throws Exception {
+        if(e1 != null && e1.getType().getName().equalsIgnoreCase("String")){
+            return true;
+        }
+        if(e2 != null && e2.getType().getName().equalsIgnoreCase("String")){
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean checkExpression(Expression e1, Expression e2) throws Exception{
+    	if (!e1.getType().equals(e2.getType())) {
+    		throw new Exception("EXPRESSÃO COM ERRO. A expressão de tipo: " + e1.getType() + "deve ter o mesmo tipo " + e2.getValue());
+		}
+    	return true;
+    }
+    
+    public Expression getExpression(Expression e1, Operation no, Expression e2) throws Exception {
+        Register r;
+
+        if (e2 == null || checkTypeCompatibility(e1.getType(), e2.getType()) || checkTypeCompatibility(e2.getType(), e1.getType())){
+            switch (no) {
+                case AND:
+                    return new Expression(new Type("boolean"));
+                case OR:
+                    return new Expression(new Type("boolean"));
+                case GTEQ:
+                    if(!contextFor){
+                    codeGenerator.generateSUBCode();
+                    codeGenerator.generateBLTZCode(3);
+                    r = codeGenerator.generateLDCode(new Expression(new Type(
+                            "boolean"), "1"));
+                    codeGenerator.generateBRCode(2);
+                    codeGenerator.generateLDCode(r, new Expression(new Type(
+                            "boolean"), "0"));
+                    }
+
+                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
+                case EQEQ:
+                    if(!contextFor) {
+                        codeGenerator.generateBEQCode(3);
+                        r = codeGenerator.generateLDCode(new Expression(new Type(
+                                "boolean"), "0"));
+                        codeGenerator.generateBRCode(2);
+                        codeGenerator.generateLDCode(r, new Expression(new Type(
+                                "boolean"), "1"));
+                    }
+                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
+
+                case LTEQ:
+                    if(!contextFor) {
+                        codeGenerator.generateSUBCode();
+                        codeGenerator.generateBGTZCode(3);
+                        r = codeGenerator.generateLDCode(new Expression(new Type(
+                                "boolean"), "1"));
+                        codeGenerator.generateBRCode(2);
+                        codeGenerator.generateLDCode(r, new Expression(new Type(
+                                "boolean"), "0"));
+                    }
+                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
+                case LT:
+                    if(!contextFor) {
+                        codeGenerator.generateSUBCode();
+                        if (e1.getContext() == "for") {
+                            codeGenerator.generateForCondition("BGEQZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP"+forCounter);
+                        }
+                        codeGenerator.generateBGEQZCode(3);
+                        r = codeGenerator.generateLDCode(new Expression(new Type(
+                                "boolean"), "1"));
+                        codeGenerator.generateBRCode(2);
+                        codeGenerator.generateLDCode(r, new Expression(new Type(
+                                "boolean"), "0"));
+                    }
+                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
+                case GT:
+                    if(!contextFor) {
+                        codeGenerator.generateSUBCode();
+                        codeGenerator.generateBLEQZCode(3);
+                        r = codeGenerator.generateLDCode(new Expression(new Type(
+                                "boolean"), "1"));
+                        codeGenerator.generateBRCode(2);
+                        codeGenerator.generateLDCode(r, new Expression(new Type(
+                                "boolean"), "0"));
+
+                    }
+                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
+                case NOTEQ:
+                    if(!contextFor) {
+                        codeGenerator.generateBEQCode(3);
+                        r = codeGenerator.generateLDCode(new Expression(new Type(
+                                "boolean"), "1"));
+                        codeGenerator.generateBRCode(2);
+                        codeGenerator.generateLDCode(r, new Expression(new Type(
+                                "boolean"), "0"));
+                    }
+                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
+                case NOT:
+                    return new Expression(new Type("boolean"));
+                case XOREQ:
+                    return new Expression(new Type("boolean"));
+                case XOR:
+                    return new Expression(new Type("boolean"));
+                case OROR:
+                    return new Expression(new Type("boolean"));
+                case ANDAND:
+                    return new Expression(new Type("boolean"));
+                case ANDEQ:
+                    return new Expression(new Type("boolean"));
+                case OREQ:
+                    return new Expression(new Type("boolean"));
+                case OROREQ:
+                    return new Expression(new Type("boolean"));
+                case MINUS:
+                    if(!contextFor) {
+                        codeGenerator.generateSUBCode();
+                    }
+                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
+                case MULT:
+                    if(!contextFor) codeGenerator.generateMULCode();
+                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
+                case MOD:
+                    if(!contextFor) codeGenerator.generateMODCode();
+                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
+                case PLUS:
+                    if(!contextFor) codeGenerator.generateADDCode();
+                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
+                case DIV:
+                    if(!contextFor) codeGenerator.generateDIVCode();
+                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
+                case DIVEQ:
+                    return new Expression(getMajorType(e1.getType(), e2.getType()));
+                case PLUSEQ:
+                    return new Expression(getMajorType(e1.getType(), e2.getType()));
+                case MINUSEQ:
+                    return new Expression(getMajorType(e1.getType(), e2.getType()));
+                case MULTEQ:
+                    return new Expression(getMajorType(e1.getType(), e2.getType()));
+                case PLUSPLUS:
+                    if(!contextFor) {
+                        codeGenerator.generateADDCode("1");
+                        codeGenerator.generateSTCode(e1);
+                    }
+                    return new Expression(e1.getType(), e1.getValue()+" "+no);
+                case MINUSMINUS:
+                    if(!contextFor) {
+                        codeGenerator.generateSUBCode("1");
+                        codeGenerator.generateSTCode(e1);
+
+                    }
+                    return new Expression(e1.getType(), e1.getValue()+" "+no);
+                default:
+                    throw new Exception("ERRO: A operação '"+ no+ "' não existe!");
+
+            }
+        }
+
+        throw new Exception("ERRO: Operação formada pela expressão '"+e1.getValue()+" "+no+" " +e2.getValue() +"' não é permitida!");
+    }
+    
+    private Type getMajorType(Type type1, Type type2) {
+        return tiposCompativeis.get(type1.getName()).contains(type2.getName()) ? type1: type2;
     }
     
     public void addVariableType(Type type) throws Exception{
