@@ -94,13 +94,18 @@ type_declaration ::= class_declaration |
 						interface_declaration ;
 						
 class_declaration ::=
-    modifier_aux CLASS IDENTIFIER                                                                                                              
-    extends_declaration 
-	interface_name_aux                                                                      
-    LBRACE field_declaration_loop RBRACE ;                                                                             
+    modifier_aux CLASS IDENTIFIER:id  									{:System.out.println("Line 97");
+                                                                        Type t = new Type(id); 
+                                                                        SemanticUtil.getInstance().addType(t);:}                                                                                                             
+    extends_declaration:superclass 										{:System.out.println("Line 100");
+                                                                        SemanticUtil.getInstance().addSupertype((String) id, (String) superclass);:}
+	interface_name_aux LBRACE field_declaration_loop RBRACE             {:System.out.println("Line 102");
+                                                                        SemanticUtil.getInstance().getCodeGenerator().generateFinalAssemblyCode();:}                     
+    ;                                                                             
 
-extends_declaration ::=
-						| EXTENDS class_name ;
+extends_declaration ::=														
+						| EXTENDS class_name:name 						{:System.out.println("Line 107"); RESULT = name;:}
+;
 	
 interface_name_aux ::=                                              
     | IMPLEMENTS interface_name_loop ;
@@ -108,7 +113,7 @@ interface_name_aux ::=
 interface_name_loop ::= interface_name
 						| interface_name COMMA interface_name_loop;
 				
-class_name ::= IDENTIFIER
+class_name ::= IDENTIFIER:i												{:System.out.println("Line 116"); RESULT = i;:}
 						| package_name DOT IDENTIFIER;
 						
 interface_name ::= IDENTIFIER

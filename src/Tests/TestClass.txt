@@ -1,0 +1,13 @@
+package Tests;
+
+import main.*;
+
+public class Tests {
+	
+	private int atributo;
+	
+	public int getAtributo() {
+		return atributo;
+	}
+
+}

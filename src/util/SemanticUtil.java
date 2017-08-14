@@ -574,5 +574,33 @@ public class SemanticUtil {
     	
     }
     
+    public void addType(Type type){
+        if (type != null){
+            if(type.getName().contains(".")){
+                String[] typeNames = type.getName().split(".");
+                String typeName = typeNames[typeNames.length-1];
+                type.setName(typeName);
+            }
+        }
+
+        if(!tiposCriados.contains(type)){
+        	tiposCriados.add(type);
+            List<String> tipos = new ArrayList<String>();
+            tipos.add(type.getName());
+            tiposCompativeis.put(type.getName(), tipos);
+        }
+    }
+    
+    public void addSupertype(String className, String superClassName) throws Exception{
+        if (superClassName != null) {
+            if (tiposCompativeis.containsKey(superClassName)){
+                tiposCompativeis.get(superClassName).add(className);
+                return;
+            }
+
+            throw new Exception("ERRO: A super classe " + superClassName + "não existe!");
+        }
+    }
+    
 
 }

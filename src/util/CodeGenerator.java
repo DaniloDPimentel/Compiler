@@ -1,5 +1,9 @@
 package util;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -240,6 +244,12 @@ public class CodeGenerator {
     
     public void addCode(String assemblyString) {
         assemblyCode += assemblyString + "\n";
+    }
+    
+    public void generateFinalAssemblyCode() throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(new File("generated-assembly.txt")));
+        writer.write(assemblyCode);
+        writer.close();
     }
 
 }

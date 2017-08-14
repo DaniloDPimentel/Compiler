@@ -11,7 +11,7 @@ import java.io.FileReader;
 public class Main {
 
     public static void main(String[] args) {
-        String filePath = "src/Tests/Test.txt";
+        String filePath = "src/Tests/TestClass.txt";
         LexicalAnalyzer lex = null;
         try {
 
