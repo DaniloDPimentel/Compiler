@@ -1,0 +1,9 @@
+package Tests;
+
+import main.*;
+
+public interface Test {
+	
+	public int getAtributo();
+
+}
