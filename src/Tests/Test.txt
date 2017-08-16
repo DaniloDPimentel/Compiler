@@ -5,10 +5,10 @@ import main.*;
 
 public class ClasseTest implements Tests {
        
-     public int funcaoTest2(int danilo2, int dan1){
-		int a = 2;
+     public int funcaoTest2(int danilo1, int dan1){
+		int a =3;
 
-		switch (3){
+		switch (danilo1){
 			case 1:
 				break;
 			case 3: continue;
@@ -19,17 +19,18 @@ public class ClasseTest implements Tests {
 		int a = 3;
 		int B = 5;
 		
-		if (2 == 2) {
-			int y = 2 + 2;
+		if (B == a) {
 		}
 		
-		int num = 3;
+		
+		int num = funcaoTest2(3,3);
+		
+		int num2 = funcaoTest2(3,1);
 		
 		switch (num){
 			case 1:
 				break;
 			case 3: continue;
-			
 		}
 		
 	}

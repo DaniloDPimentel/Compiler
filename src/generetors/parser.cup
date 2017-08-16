@@ -99,28 +99,33 @@ class_declaration ::=
                                                                         SemanticUtil.getInstance().addType(t);:}                                                                                                             
     extends_declaration:superclass 										{:System.out.println("Line 100");
                                                                         SemanticUtil.getInstance().addSupertype((String) id, (String) superclass);:}
-	interface_name_aux LBRACE field_declaration_loop RBRACE             {:System.out.println("Line 102");
-                                                                        SemanticUtil.getInstance().getCodeGenerator().generateFinalAssemblyCode();:}                     
+	interface_name_aux:i LBRACE field_declaration_loop RBRACE       	{:System.out.println("Line 102");
+																		SemanticUtil.getInstance().addSupertype((String) id, (String) i);
+                                                                        SemanticUtil.getInstance().getCodeGenerator().generateFinalAssemblyCode();:}                                 	
     ;                                                                             
 
 extends_declaration ::=														
-						| EXTENDS class_name:name 						{:System.out.println("Line 107"); RESULT = name;:}
+						| EXTENDS class_name:name 						{:System.out.println("Line 109"); RESULT = name;:}
 ;
 	
 interface_name_aux ::=                                              
-    | IMPLEMENTS interface_name_loop ;
+    | IMPLEMENTS interface_name_loop:i									{:System.out.println("Line 113");RESULT = i;:}
+;
 	
-interface_name_loop ::= interface_name
-						| interface_name COMMA interface_name_loop;
+interface_name_loop ::= interface_name:i								{:System.out.println("Line 116"); RESULT = i;:}
+						| interface_name:i COMMA interface_name_loop;
 				
-class_name ::= IDENTIFIER:i												{:System.out.println("Line 116"); RESULT = i;:}
-						| package_name DOT IDENTIFIER;
+class_name ::= IDENTIFIER:i												{:System.out.println("Line 119"); RESULT = i;:}
+						| package_name DOT IDENTIFIER:i					{:System.out.println("Line 120"); RESULT = i;:}
+;
 						
-interface_name ::= IDENTIFIER
-						| package_name DOT IDENTIFIER;
-
+interface_name ::= IDENTIFIER:i											{:System.out.println("Line 123"); RESULT = i;:}
+						| package_name DOT IDENTIFIER:i					{:System.out.println("Line 124"); RESULT = i;:}
+;
 interface_declaration ::= 
-						modifier_aux INTERFACE IDENTIFIER 
+						modifier_aux INTERFACE IDENTIFIER:id			{:System.out.println("Line 97");
+                                                                        Type t = new Type(id); 
+                                                                        SemanticUtil.getInstance().addInterface(t);:}
 						extends_declaration
 						LBRACE field_declaration_loop RBRACE;
 						
@@ -203,15 +208,22 @@ variable_declaration_aux ::= variable_declarator:v																	{:System.out.
 								;
 								
 variable_declarator ::= IDENTIFIER:i bracks attribution:exp 															{:System.out.println("Line 194");
-																													Variable var = new Variable((String) i, new Type("null"), (Expression) exp);
-																													RESULT = var;:}		
+																													if (SemanticUtil.getInstance().checkMethodParams(exp)){
+																														Variable var = new Variable((String) i, new Type("null"), (Expression) exp);
+																														RESULT = var;
+																														SemanticUtil.getInstance().getCodeGenerator().assignmentDeclaration((Variable) var, (Expression) exp);
+                 
+																													}else{
+																														RESULT = SemanticUtil.getInstance().getVariableFromMethod((String) i);
+																													}
+																													:}		
 ;
 
 attribution ::= 
-				| EQ variable_initializer:exp																		{:System.out.println("Line 194"); RESULT = exp;:}
+				| EQ variable_initializer:exp																		{:System.out.println("Line 208"); RESULT = exp;:}
 				;
 				
-variable_initializer ::= expression:e 																				{:System.out.println("Line 202"); RESULT = e;:}
+variable_initializer ::= expression:e 																				{:System.out.println("Line 212"); RESULT = e;:}
 							| LBRACE variable_initializer_aux RBRACE ;
 							
 variable_initializer_aux ::= 
@@ -242,14 +254,16 @@ expression ::= numeric_expression:ne									{:System.out.println("Line 204"); R
 				| expression:e expression_opcionais:eop 				{:System.out.println("Line 217"); RESULT = e;:}
 				;
 
-expression_opcionais ::= LPAREN arglist_opcional RPAREN
-						| LBRACK expression RBRACK
-						| DOT expression
-						| COMMA expression
-						| INSTANCEOF import_statement_aux ;
+expression_opcionais ::= LPAREN arglist_opcional:ao RPAREN              {:System.out.println("Line 240"); RESULT = ao;:}
+						| LBRACK expression:e RBRACK                    {:System.out.println("Line 241"); RESULT = e;:}
+						| DOT expression:e								{:System.out.println("Line 242"); RESULT = e;:}
+						| COMMA expression:e							{:System.out.println("Line 243"); RESULT = SemanticUtil.getInstance().addArgList(e); :}
+						| INSTANCEOF import_statement_aux:ia 			{:System.out.println("Line 244"); RESULT = ia;:}
+						;
 
 arglist_opcional ::= 
-						| arglist ;
+						| arglist:a        								{:System.out.println("Line 248"); RESULT = a;:}
+						;
 
 if_statement ::= IF LPAREN expression RPAREN statement else_opcional ;
 
@@ -287,8 +301,12 @@ switch_aux ::= CASE expression:e COLON 																	{: System.out.println("L
 numeric_expression ::= MINUS expression:e                                      
 						| signal_opt expression:e 														{: System.out.println("Line 283"); SemanticUtil.getInstance().checkNumericExpression((Expression)e); RESULT=e; :}
 						| expression:e signal_opt 														{: System.out.println("Line 284"); SemanticUtil.getInstance().checkNumericExpression((Expression)e); RESULT=e; :}
-						| expression:e1 numeric_operators:no expression:e2								{: System.out.println("Line 285"); 
-																										SemanticUtil.getInstance().checkExpression((Expression)e1,(Expression)e2); 
+						| expression:e1 numeric_operators:no expression:e2								{: System.out.println("Line 285");
+																										Variable v1 = SemanticUtil.getInstance().findVariableByIdentifier(e1.toString());
+																								    	Variable v2 = SemanticUtil.getInstance().findVariableByIdentifier(e2.toString());
+																								    	Expression exp1 = new Expression(v1.getType(),v1.getIdentifier());
+																								    	Expression exp2 = new Expression(v2.getType(),v2.getIdentifier()); 
+																										SemanticUtil.getInstance().checkExpression((Expression)exp1,(Expression)exp2); 
 																										RESULT=SemanticUtil.getInstance().getExpression((Expression) e1,
 					   												        							Operation.valueOf(((Node) no).getIdentifier()), (Expression) e2); :}
 ;					   												        							
@@ -312,7 +330,11 @@ numeric_operators ::= PLUS 													{:RESULT= new Node("+","primary", "PLUS"
 
 
 testing_expression ::= 	expression:e1 boolean_operators:bo expression:e2		{:System.out.println("Line 309");
-																				SemanticUtil.getInstance().checkExpression((Expression) e1, (Expression) e2);
+																				Variable v1 = SemanticUtil.getInstance().findVariableByIdentifier(e1.toString());
+    																			Variable v2 = SemanticUtil.getInstance().findVariableByIdentifier(e2.toString());
+    																			Expression exp1 = new Expression(v1.getType(),v1.getIdentifier());
+    																			Expression exp2 = new Expression(v2.getType(),v2.getIdentifier());
+																				SemanticUtil.getInstance().checkExpression((Expression) exp1, (Expression) exp2);
 																				RESULT = SemanticUtil.getInstance().getExpression((Expression) e1,
 					   												        	Operation.valueOf(((Node) bo).getIdentifier()), (Expression) e2);:}	
 ;
@@ -343,9 +365,13 @@ logical_operators ::= AMPERSAND 											{:RESULT = new Node("&","primary", "A
 						;
 
 string_expression ::= expression:e1 string_operators:so expression:e2 		{:System.out.println("Line 309");
-																			SemanticUtil.getInstance().checkExpression((Expression) e1, (Expression) e2);
+																			Variable v1 = SemanticUtil.getInstance().findVariableByIdentifier(e1.toString());
+    																		Variable v2 = SemanticUtil.getInstance().findVariableByIdentifier(e2.toString());
+    																		Expression exp1 = new Expression(v1.getType(),v1.getIdentifier());
+    																		Expression exp2 = new Expression(v2.getType(),v2.getIdentifier());
+																			SemanticUtil.getInstance().checkExpression((Expression) exp1, (Expression) exp2);
 																			RESULT = SemanticUtil.getInstance().getExpression((Expression) e1,
-					   												        Operation.valueOf(((Node) so).getIdentifier()), (Expression) e2);:}	
+					   												        Operation.valueOf(((Node) so).getIdentifier()), (Expression) e2);:}
 ;
 
 string_operators ::= PLUS 
@@ -373,8 +399,9 @@ literal_expression ::= INTEGER_LITERAL:i													{:RESULT = new Expression(n
 						| CHARACTER_LITERAL:chr											{:RESULT = new Expression(new Type("char"), chr.toString()); System.out.println("Line 338");:}
 						;
 						
-arglist ::=  expression
-			| COMMA expression arglist ;
+arglist ::=  expression:e																	{:System.out.println("Line 364"); RESULT = SemanticUtil.getInstance().addArgList(e); :}
+			| COMMA expression:e arglist 													{:System.out.println("Line 365"); RESULT = SemanticUtil.getInstance().addArgList(e); :}
+			;
 			
 type_specifier ::= BOOLEAN 												{:RESULT = new Type("boolean");:}
 					| BYTE 												{:RESULT = new Type("byte");:}

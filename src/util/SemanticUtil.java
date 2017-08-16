@@ -15,6 +15,8 @@ public class SemanticUtil {
     private List<Variable> listVariables = new ArrayList<Variable>();
     private List<Object> listParams = new ArrayList<Object>();
 
+    String metodoChamadoAtual = "";
+    private List<Object> listParamsMetodoChamado = new ArrayList<Object>();
 
 
     private Stack<VariablesScope> variablesStackScope = new Stack<VariablesScope>();
@@ -140,6 +142,7 @@ public class SemanticUtil {
     }
     
     public boolean checkExpression(Expression e1, Expression e2) throws Exception{
+    	
     	if (!e1.getType().equals(e2.getType())) {
     		throw new Exception("EXPRESSÃO COM ERRO. A expressão de tipo: " + e1.getType() + "deve ter o mesmo tipo " + e2.getValue());
 		}
@@ -305,6 +308,14 @@ public class SemanticUtil {
     	System.out.println("Variable: "+ variable.identifier);
     	System.out.println("Tipo: "+ variable.getType());
     	
+    	if (variable.getIdentifier() == metodoChamadoAtual){
+    		checkVariableGlobal(variable);
+            variables.put(variable.getIdentifier(),variable);
+    		
+    		metodoChamadoAtual = "";
+    		return;
+    	}
+    	
     	if (!(variable.value == null)){
     		variable.type = variable.getValue().getType();
     	}
@@ -393,18 +404,69 @@ public class SemanticUtil {
     }
     
     public void validateVariableName(String variableName) throws Exception{
-        if (!checkVariableExistence(variableName)){
+    	Function tmp = new Function("", null);
+    	
+    	for (Function f : functions){
+    		tmp = f;
+    		if (tmp.getName().equals(variableName)){
+    			metodoChamadoAtual = variableName;
+        		listParamsMetodoChamado = new ArrayList<Object>();
+
+    			return;
+    		}
+    	}
+    	if (!checkVariableExistence(variableName)){
             throw new Exception("ERRO: A variavel: " + variableName + " não foi declarada!");
         }
     }
     
-    public Object validateCallMethod(Expression e, Expression eop) throws Exception{
-        Object result = null;
+    public boolean checkMethodParams(Object exp) throws Exception{
+        boolean result = true;
     	
-    	if (true){
-            throw new Exception("ERRO: A variavel: foi declarada!");
+    	if (metodoChamadoAtual == exp.toString()){
+    		
+    		Function tmp = new Function("", null);
+        	
+        	for (Function f : functions){
+        		tmp = f;
+        		if (tmp.getName().equals(metodoChamadoAtual)){
+        			break;
+        		}
+        	}
+        	
+    		if (tmp.getParams().size() != listParamsMetodoChamado.size()){
+    			throw new Exception("ERRO: Numero de parametros do metodo nao é compativel");
+    		}
+
+    		for (int i = 0; i < tmp.getParams().size(); i++){
+    			Type tipo1 = ((Expression) listParamsMetodoChamado.get(i)).getType();
+    			Type tipo2 = ((Variable)tmp.getParams().get(i)).getType();
+
+	    		if (! tipo1.toString().equals(tipo2.toString()) ){
+	    			throw new Exception("ERRO: O tipo passado no metodo nao é compativel");
+	    			
+	    		}else{
+	    			result = false;
+	    		}
+    		}
         }
         return result;
+    }
+    
+    public Variable getVariableFromMethod(String i){
+    	Function tmp = new Function("", null);
+    	
+    	for (Function f : functions){
+    		tmp = f;
+    		if (tmp.getName().equals(metodoChamadoAtual)){
+    			break;
+    		}
+    	}
+    	
+    	Variable result = new Variable(i, tmp.getDeclaredReturnType());
+    	
+    	
+    	return result;
     }
     
     public Variable findVariableByIdentifier(String variableName){
@@ -435,7 +497,10 @@ public class SemanticUtil {
     }
     
     public void checkMethod(Type type, String functionName, ArrayList<Param> params) throws Exception {
-
+    	
+    	/* Zera lista de parametros */
+    	listParams = new ArrayList<Object>();
+    	
     	System.out.println("funcao: "+type);
     	
         if(type == null){
@@ -530,6 +595,15 @@ public class SemanticUtil {
 		return listParams;
 	}
 	
+    public <T> List<Object> addArgList(T... p) {
+    	
+		for (int i = 0 ; i < p.length ; i++) {
+			listParamsMetodoChamado.add(p[i]);
+		}
+		
+		return listParamsMetodoChamado;
+	}
+    
     public boolean checkObject(Object e) throws Exception {
 		boolean result = true;
     	try{
@@ -600,6 +674,38 @@ public class SemanticUtil {
 
             throw new Exception("ERRO: A super classe " + superClassName + "não existe!");
         }
+    }
+    
+    public void addInterface(Type type){
+        if (type != null){
+            if(type.getName().contains(".")){
+                String[] typeNames = type.getName().split(".");
+                String typeName = typeNames[typeNames.length-1];
+                type.setName(typeName);
+            }
+        }
+
+        if(!tiposCriados.contains(type)){
+        	tiposCriados.add(type);
+            List<String> tipos = new ArrayList<String>();
+            tipos.add(type.getName());
+            tiposCompativeis.put(type.getName(), tipos);
+        }
+    }
+    
+    /*public void addInterface(String className, String inter) throws Exception{
+        if (inter != null) {
+            if (tiposCompativeis.containsKey(inter)){
+                tiposCompativeis.get(inter).add(className);
+                return;
+            }
+
+            throw new Exception("ERRO: A interface " + inter + "não existe!");
+        }
+    }*/
+    
+    public void verifyPoliform(String classe) {
+    	
     }
     
 

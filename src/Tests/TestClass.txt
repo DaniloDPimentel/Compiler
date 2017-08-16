@@ -2,9 +2,9 @@ package Tests;
 
 import main.*;
 
-public class Tests {
+public class Tests extends ClasseTest {
 	
-	private int atributo;
+	private int atributo=3;
 	
 	public int getAtributo() {
 		return atributo;
