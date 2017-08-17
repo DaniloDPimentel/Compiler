@@ -2,7 +2,7 @@ package Tests;
 
 import main.*;
 
-public interface Test {
+public interface InterfaceTests {
 	
 	public int getAtributo();
 

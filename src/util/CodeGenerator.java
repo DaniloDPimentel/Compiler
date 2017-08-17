@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -227,19 +228,19 @@ public class CodeGenerator {
     public void generateSTCode(Variable variable) {
         labels += 8;
         addCode(labels + ": ST " + variable.getIdentifier() + ", " + allocateRegister());
-        this.register = -1;
+        this.register = 2;
     }
 
     public void generateSTCode(Register one, Expression exp) {
         labels += 8;
         addCode(labels + ": ST " + one + ", " + exp.getAssemblyValue());
-        this.register = -1;
+        this.register = 2;
     }
 
     public void generateSTCode(Expression exp) {
         labels += 8;
         addCode(labels + ": ST " + exp.getAssemblyValue() + ", " + allocateRegister());
-        this.register = -1;
+        this.register = 2;
     }
 
     public void addCode(String assemblyString) {
@@ -301,27 +302,28 @@ public class CodeGenerator {
 
         Integer addressfuction = functionAddress.get(name);
 
-        //String assa = SemanticImpl.getInstance().getCurrentScope().getName();
-        //generateADDCode(Register.SP, Register.SP, "#"+assa+"size");
+        String assa = SemanticUtil.getInstance().getCurrentScope().getName();
+        generateADDCode(Register.SP, Register.SP, "#"+assa+"size");
         generateSTCode(Register.SP0, new Expression(new Type("int"), "#"+(labels+24)));
         generateBRCode(addressfuction);
-        //generateSUBCode(Register.SP, Register.SP, "#"+assa+"size");
+        generateSUBCode(Register.SP, Register.SP, "#"+assa+"size");
     }
 
-    public void generateCodeFunctionCall(String name, ArrayList<Expression> args){
+    public void generateCodeFunctionCall(String name, List<Param> list){
         String key = name + " ";
-        for (Expression e: args
-             ) {
-            key += e.getType().getName();
+        for (Object o : list){
+        	Variable tmp = (Variable) o;
+        	
+        	key += tmp.getType().getName();
         }
         Integer addressfuction = functionAddress.get(key);
 
-        //String assa = SemanticImpl.getInstance().getCurrentScope().getName();
-        //generateADDCode(Register.SP, Register.SP, "#"+assa+"size");
+        String assa = SemanticUtil.getInstance().getCurrentScope().getName();
+        generateADDCode(Register.SP, Register.SP, "#"+assa+"size");
         generateSTCode(Register.SP0, new Expression(new Type("int"), "#"+(labels+24)));
 
         generateBRCode(addressfuction);
-        //generateSUBCode(Register.SP, Register.SP, "#"+assa+"size");
+        generateSUBCode(Register.SP, Register.SP, "#"+assa+"size");
     }
 
     public void StorageReturnedType(Function function, Expression returnedExpression) {

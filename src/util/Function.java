@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Function extends VariablesScope{
 	
-
+	String father;
 	Type declaredReturnType;
 	Type returnType;
 	List<Param> params;
@@ -36,6 +36,14 @@ public class Function extends VariablesScope{
 	
 	public void setDeclaredReturnedType(Type type) {
 		this.declaredReturnType = type;
+	}
+	
+	public String getFather() {
+		return father;
+	}
+
+	public void setFather(String father) {
+		this.father = father;
 	}
 
 	public void validateReturnedType() throws Exception { // Checks if the function returned what it was supposed to..

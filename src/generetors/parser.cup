@@ -96,7 +96,7 @@ type_declaration ::= class_declaration |
 class_declaration ::=
     modifier_aux CLASS IDENTIFIER:id  									{:System.out.println("Line 97");
                                                                         Type t = new Type(id); 
-                                                                        SemanticUtil.getInstance().addType(t);:}                                                                                                             
+                                                                        SemanticUtil.getInstance().addType(t);:}
     extends_declaration:superclass 										{:System.out.println("Line 100");
                                                                         SemanticUtil.getInstance().addSupertype((String) id, (String) superclass);:}
 	interface_name_aux:i LBRACE field_declaration_loop RBRACE       	{:System.out.println("Line 102");
@@ -123,7 +123,7 @@ interface_name ::= IDENTIFIER:i											{:System.out.println("Line 123"); RESU
 						| package_name DOT IDENTIFIER:i					{:System.out.println("Line 124"); RESULT = i;:}
 ;
 interface_declaration ::= 
-						modifier_aux INTERFACE IDENTIFIER:id			{:System.out.println("Line 97");
+						modifier_aux INTERFACE IDENTIFIER:id			{:System.out.println("Line 125");
                                                                         Type t = new Type(id); 
                                                                         SemanticUtil.getInstance().addInterface(t);:}
 						extends_declaration
@@ -139,8 +139,10 @@ field_declaration ::=
 					| static_initializer
 					| SEMICOLON;
 					
-method_declaration ::= modifier_aux type:t IDENTIFIER:i LPAREN parameter_list:p RPAREN			{:System.out.println("Line 132"); SemanticUtil.getInstance().checkMethod((Type)t, i,(ArrayList<Param>) p);:}
-						statement_block_aux;
+method_declaration ::= modifier_aux type:t IDENTIFIER:i LPAREN parameter_list:p RPAREN			{:System.out.println("Line 132"); SemanticUtil.getInstance().checkMethod((Type)t, i,(ArrayList<Param>) p);
+																								  SemanticUtil.getInstance().getCodeGenerator().addBRSP((String) i);:}
+						statement_block_aux														
+						;
 					
 statement_block_aux ::= statement_block 
 					| SEMICOLON ;
@@ -335,8 +337,8 @@ testing_expression ::= 	expression:e1 boolean_operators:bo expression:e2		{:Syst
     																			Expression exp1 = new Expression(v1.getType(),v1.getIdentifier());
     																			Expression exp2 = new Expression(v2.getType(),v2.getIdentifier());
 																				SemanticUtil.getInstance().checkExpression((Expression) exp1, (Expression) exp2);
-																				RESULT = SemanticUtil.getInstance().getExpression((Expression) e1,
-					   												        	Operation.valueOf(((Node) bo).getIdentifier()), (Expression) e2);:}	
+																				RESULT = SemanticUtil.getInstance().getExpression((Expression) exp1,
+					   												        	Operation.valueOf(((Node) bo).getIdentifier()), (Expression) exp2);:}	
 ;
 
 boolean_operators ::= GT 													{:RESULT = new Node(">","primary", "GT");:}
@@ -370,8 +372,8 @@ string_expression ::= expression:e1 string_operators:so expression:e2 		{:System
     																		Expression exp1 = new Expression(v1.getType(),v1.getIdentifier());
     																		Expression exp2 = new Expression(v2.getType(),v2.getIdentifier());
 																			SemanticUtil.getInstance().checkExpression((Expression) exp1, (Expression) exp2);
-																			RESULT = SemanticUtil.getInstance().getExpression((Expression) e1,
-					   												        Operation.valueOf(((Node) so).getIdentifier()), (Expression) e2);:}
+																			RESULT = SemanticUtil.getInstance().getExpression((Expression) exp1,
+					   												        Operation.valueOf(((Node) so).getIdentifier()), (Expression) exp2);:}
 ;
 
 string_operators ::= PLUS 
@@ -384,11 +386,13 @@ bit_operators ::= RSHIFTEQ | LSHIFT | RSHIFT | URSHIFT ;
 
 casting_expression ::= LPAREN type RPAREN expression ;
 
-creating_expression ::= NEW creating_expression_aux ;
+creating_expression ::= NEW creating_expression_aux								{:System.out.println("Line 387");:}
+;
 
 creating_expression_aux ::= class_name LPAREN arglist_opcional RPAREN
 							| type_specifier creating_expression_opcional bracks 
-							| LPAREN expression RPAREN ;
+							| LPAREN expression RPAREN							{:System.out.println("Line 392");:} 
+;
 
 creating_expression_opcional ::= 
 									| LBRACK expression RBRACK ;

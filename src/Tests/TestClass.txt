@@ -2,11 +2,11 @@ package Tests;
 
 import main.*;
 
-public class Tests extends ClasseTest {
+public class heritage extends ClasseTest {
 	
-	private int atributo=3;
+	private String atributo = "danilo";
 	
-	public int getAtributo() {
+	public String getAtributo() {
 		return atributo;
 	}
 

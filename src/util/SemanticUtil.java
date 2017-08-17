@@ -8,705 +8,721 @@ import java.util.Stack;
 
 public class SemanticUtil {
 
-    private static SemanticUtil singleton;
-    private static Map<String, List<String>> tiposCompativeis = new HashMap<String, List<String>>();
-    private List<Type> tiposCriados = new ArrayList<Type>();
+	private static SemanticUtil singleton;
+	private static Map<String, List<String>> tiposCompativeis = new HashMap<String, List<String>>();
+	private List<Type> tiposCriados = new ArrayList<Type>();
 
-    private List<Variable> listVariables = new ArrayList<Variable>();
-    private List<Object> listParams = new ArrayList<Object>();
+	private List<Variable> listVariables = new ArrayList<Variable>();
+	private List<Object> listParams = new ArrayList<Object>();
 
-    String metodoChamadoAtual = "";
-    private List<Object> listParamsMetodoChamado = new ArrayList<Object>();
+	String metodoChamadoAtual = "";
+	String classeChamadaAtual = "";
+	private List<Object> listParamsMetodoChamado = new ArrayList<Object>();
 
+	private Stack<VariablesScope> variablesStackScope = new Stack<VariablesScope>();
+	private HashMap<String, Variable> variables = new HashMap<String, Variable>();
+	private ArrayList<Function> functions = new ArrayList<Function>();
+	public static boolean contextFor;
+	public static CodeGenerator codeGenerator;
+	public int forCounter = 0;
 
-    private Stack<VariablesScope> variablesStackScope = new Stack<VariablesScope>();
-    private HashMap<String,Variable> variables = new HashMap<String,Variable>();
-    private ArrayList<Function> functions = new ArrayList<Function>();
-    public static boolean contextFor;
-    public static CodeGenerator codeGenerator;
-    public int forCounter = 0;
-    
-    public CodeGenerator getCodeGenerator() {
-    	return codeGenerator;
-    }
+	public CodeGenerator getCodeGenerator() {
+		return codeGenerator;
+	}
 
+	public static SemanticUtil getInstance() {
+		if (singleton == null) {
+			singleton = new SemanticUtil();
+			initTypeCompatibility();
+			codeGenerator = new CodeGenerator();
+		}
+		return singleton;
+	}
 
-	public static SemanticUtil getInstance(){
-        if(singleton ==  null){
-            singleton = new SemanticUtil();
-            initTypeCompatibility();
-            codeGenerator = new CodeGenerator();
-        }
-        return singleton;
-    }
-	
-	private final List<Type> listaTipos = new ArrayList<Type>(){{
-		add(new Type("boolean"));
-		add(new Type("char"));
-		add(new Type("byte"));
-        add(new Type("short") );
-        add(new Type("int") );
-        add(new Type("float"));
-        add(new Type("long"));
-        add(new Type("double"));
-        add(new Type("string"));
-    }};
+	private final List<Type> listaTipos = new ArrayList<Type>() {
+		{
+			add(new Type("boolean"));
+			add(new Type("char"));
+			add(new Type("byte"));
+			add(new Type("short"));
+			add(new Type("int"));
+			add(new Type("float"));
+			add(new Type("long"));
+			add(new Type("double"));
+			add(new Type("string"));
+		}
+	};
 
-    private static void initTypeCompatibility(){
-        List<String> doubleCompTypes = new ArrayList<String>();
-        doubleCompTypes.add("int");
-        doubleCompTypes.add("float");
-        doubleCompTypes.add("double");
-        doubleCompTypes.add("long");
+	private static void initTypeCompatibility() {
+		List<String> doubleCompTypes = new ArrayList<String>();
+		doubleCompTypes.add("int");
+		doubleCompTypes.add("float");
+		doubleCompTypes.add("double");
+		doubleCompTypes.add("long");
 
-        List<String> floatCompTypes = new ArrayList<String>();
-        floatCompTypes.add("int");
-        floatCompTypes.add("float");
-        floatCompTypes.add("long");
+		List<String> floatCompTypes = new ArrayList<String>();
+		floatCompTypes.add("int");
+		floatCompTypes.add("float");
+		floatCompTypes.add("long");
 
-        List<String> longCompTypes = new ArrayList<String>();
-        longCompTypes.add("long");
-        longCompTypes.add("int");
+		List<String> longCompTypes = new ArrayList<String>();
+		longCompTypes.add("long");
+		longCompTypes.add("int");
 
-        List<String> intCompTypes = new ArrayList<String>();
-        intCompTypes.add("int");
-        intCompTypes.add("Integer");
+		List<String> intCompTypes = new ArrayList<String>();
+		intCompTypes.add("int");
+		intCompTypes.add("Integer");
 
-        List<String> stringCompTypes = new ArrayList<String>();
-        stringCompTypes.add("int");
-        stringCompTypes.add("double");
-        stringCompTypes.add("long");
-        stringCompTypes.add("float");
-        stringCompTypes.add("char");
-        stringCompTypes.add("null");
-        stringCompTypes.add("boolean");
+		List<String> stringCompTypes = new ArrayList<String>();
+		stringCompTypes.add("int");
+		stringCompTypes.add("double");
+		stringCompTypes.add("long");
+		stringCompTypes.add("float");
+		stringCompTypes.add("char");
+		stringCompTypes.add("null");
+		stringCompTypes.add("boolean");
 
-        tiposCompativeis.put("double", doubleCompTypes);
-        tiposCompativeis.put("float", floatCompTypes);
-        tiposCompativeis.put("long", longCompTypes);
-        tiposCompativeis.put("int", intCompTypes);
-        tiposCompativeis.put("string", stringCompTypes);
-        tiposCompativeis.put("String", stringCompTypes);
-    }
-    
-    public void checkSwitchExpression(Expression e) throws Exception{
-    	
-    	if (e == null){
-    		return;
-    	}
-    	if (!(e.getType().getName().equals("int")
-				||e.getType().getName().equals("long")
-				||e.getType().getName().equals("Integer"))) {
-            throw new Exception("SWITCH CASE COM ERRO. A express„o de tipo: " + e.getType() + ", e valor: " + e.getValue() + " n„o s„o numericos");
-        }
+		tiposCompativeis.put("double", doubleCompTypes);
+		tiposCompativeis.put("float", floatCompTypes);
+		tiposCompativeis.put("long", longCompTypes);
+		tiposCompativeis.put("int", intCompTypes);
+		tiposCompativeis.put("string", stringCompTypes);
+		tiposCompativeis.put("String", stringCompTypes);
+	}
 
-    }   
-    
-    public void checkSwitchExpression(Object e) throws Exception{
-    	if (e == null){
-    		return;
-    	}
-    	
-    	if (!checkVariableExistence(e.toString())){
-            throw new Exception("Variavel nao declarada: " + e );
-    	}
-    }
-    
-    public boolean checkNumericExpression(Expression e) throws Exception{
-    	if (!e.isNumeric()) {
+	public void checkSwitchExpression(Expression e) throws Exception {
+
+		if (e == null) {
+			return;
+		}
+		if (!(e.getType().getName().equals("int") || e.getType().getName().equals("long")
+				|| e.getType().getName().equals("Integer"))) {
+			throw new Exception("SWITCH CASE COM ERRO. A express„o de tipo: " + e.getType() + ", e valor: "
+					+ e.getValue() + " n„o s„o numericos");
+		}
+
+	}
+
+	public void checkSwitchExpression(Object e) throws Exception {
+		if (e == null) {
+			return;
+		}
+
+		if (!checkVariableExistence(e.toString())) {
+			throw new Exception("Variavel nao declarada: " + e);
+		}
+	}
+
+	public boolean checkNumericExpression(Expression e) throws Exception {
+		if (!e.isNumeric()) {
 			throw new Exception("A express„o " + e.toString() + "n„o È do tipo numÈrico.");
 		}
-    	return true;
-    }
-    
-    public boolean checkNumericExpression(Expression e1, Expression e2) throws Exception{
-        if(e1 != null && e1.isNumeric()){
-            if(e2 != null && e2.isNumeric()){
-                return true;
-            }
-        }else if(isStringExpression(e1,e2)){
-            return true;
-        }
-        throw new Exception("ERRO: A express„o '"+ e1.getValue()+ "' com tipo '" + e1.getType().getName() +
-                "' e/ou a express„o " + e2.getValue() + " com tipo '"+ e2.getType().getName()+"' n„o È express„o numÈrica ou entre string");
-    }
-    
-    public boolean isStringExpression(Expression e1, Expression e2) throws Exception {
-        if(e1 != null && e1.getType().getName().equalsIgnoreCase("String")){
-            return true;
-        }
-        if(e2 != null && e2.getType().getName().equalsIgnoreCase("String")){
-            return true;
-        }
-        return false;
-    }
-    
-    public boolean checkExpression(Expression e1, Expression e2) throws Exception{
-    	
-    	if (!e1.getType().equals(e2.getType())) {
-    		throw new Exception("EXPRESS√O COM ERRO. A express„o de tipo: " + e1.getType() + "deve ter o mesmo tipo " + e2.getValue());
+		return true;
+	}
+
+	public boolean checkNumericExpression(Expression e1, Expression e2) throws Exception {
+		if (e1 != null && e1.isNumeric()) {
+			if (e2 != null && e2.isNumeric()) {
+				return true;
+			}
+		} else if (isStringExpression(e1, e2)) {
+			return true;
 		}
-    	return true;
-    }
-    
-    public Expression getExpression(Expression e1, Operation no, Expression e2) throws Exception {
-        Register r;
+		throw new Exception("ERRO: A express„o '" + e1.getValue() + "' com tipo '" + e1.getType().getName()
+				+ "' e/ou a express„o " + e2.getValue() + " com tipo '" + e2.getType().getName()
+				+ "' n„o È express„o numÈrica ou entre string");
+	}
 
-        if (e2 == null || checkTypeCompatibility(e1.getType(), e2.getType()) || checkTypeCompatibility(e2.getType(), e1.getType())){
-            switch (no) {
-                case AND:
-                    return new Expression(new Type("boolean"));
-                case OR:
-                    return new Expression(new Type("boolean"));
-                case GTEQ:
-                    if(!contextFor){
-                    codeGenerator.generateSUBCode();
-                    codeGenerator.generateBLTZCode(3);
-                    r = codeGenerator.generateLDCode(new Expression(new Type(
-                            "boolean"), "1"));
-                    codeGenerator.generateBRCode(2);
-                    codeGenerator.generateLDCode(r, new Expression(new Type(
-                            "boolean"), "0"));
-                    }
+	public boolean isStringExpression(Expression e1, Expression e2) throws Exception {
+		if (e1 != null && e1.getType().getName().equalsIgnoreCase("String")) {
+			return true;
+		}
+		if (e2 != null && e2.getType().getName().equalsIgnoreCase("String")) {
+			return true;
+		}
+		return false;
+	}
 
-                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
-                case EQEQ:
-                    if(!contextFor) {
-                        codeGenerator.generateBEQCode(3);
-                        r = codeGenerator.generateLDCode(new Expression(new Type(
-                                "boolean"), "0"));
-                        codeGenerator.generateBRCode(2);
-                        codeGenerator.generateLDCode(r, new Expression(new Type(
-                                "boolean"), "1"));
-                    }
-                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
+	public boolean checkExpression(Expression e1, Expression e2) throws Exception {
 
-                case LTEQ:
-                    if(!contextFor) {
-                        codeGenerator.generateSUBCode();
-                        codeGenerator.generateBGTZCode(3);
-                        r = codeGenerator.generateLDCode(new Expression(new Type(
-                                "boolean"), "1"));
-                        codeGenerator.generateBRCode(2);
-                        codeGenerator.generateLDCode(r, new Expression(new Type(
-                                "boolean"), "0"));
-                    }
-                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
-                case LT:
-                    if(!contextFor) {
-                        codeGenerator.generateSUBCode();
-                        if (e1.getContext() == "for") {
-                            codeGenerator.generateForCondition("BGEQZ", "forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP"+forCounter);
-                        }
-                        codeGenerator.generateBGEQZCode(3);
-                        r = codeGenerator.generateLDCode(new Expression(new Type(
-                                "boolean"), "1"));
-                        codeGenerator.generateBRCode(2);
-                        codeGenerator.generateLDCode(r, new Expression(new Type(
-                                "boolean"), "0"));
-                    }
-                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
-                case GT:
-                    if(!contextFor) {
-                        codeGenerator.generateSUBCode();
-                        codeGenerator.generateBLEQZCode(3);
-                        r = codeGenerator.generateLDCode(new Expression(new Type(
-                                "boolean"), "1"));
-                        codeGenerator.generateBRCode(2);
-                        codeGenerator.generateLDCode(r, new Expression(new Type(
-                                "boolean"), "0"));
+		if (!e1.getType().equals(e2.getType())) {
+			throw new Exception("EXPRESS√O COM ERRO. A express„o de tipo: " + e1.getType() + "deve ter o mesmo tipo "
+					+ e2.getValue());
+		}
+		return true;
+	}
 
-                    }
-                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
-                case NOTEQ:
-                    if(!contextFor) {
-                        codeGenerator.generateBEQCode(3);
-                        r = codeGenerator.generateLDCode(new Expression(new Type(
-                                "boolean"), "1"));
-                        codeGenerator.generateBRCode(2);
-                        codeGenerator.generateLDCode(r, new Expression(new Type(
-                                "boolean"), "0"));
-                    }
-                    return new Expression(new Type("boolean"), e1.getValue()+" "+no+" "+e2.getValue());
-                case NOT:
-                    return new Expression(new Type("boolean"));
-                case XOREQ:
-                    return new Expression(new Type("boolean"));
-                case XOR:
-                    return new Expression(new Type("boolean"));
-                case OROR:
-                    return new Expression(new Type("boolean"));
-                case ANDAND:
-                    return new Expression(new Type("boolean"));
-                case ANDEQ:
-                    return new Expression(new Type("boolean"));
-                case OREQ:
-                    return new Expression(new Type("boolean"));
-                case OROREQ:
-                    return new Expression(new Type("boolean"));
-                case MINUS:
-                    if(!contextFor) {
-                        codeGenerator.generateSUBCode();
-                    }
-                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
-                case MULT:
-                    if(!contextFor) codeGenerator.generateMULCode();
-                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
-                case MOD:
-                    if(!contextFor) codeGenerator.generateMODCode();
-                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
-                case PLUS:
-                    if(!contextFor) codeGenerator.generateADDCode();
-                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
-                case DIV:
-                    if(!contextFor) codeGenerator.generateDIVCode();
-                    return new Expression(getMajorType(e1.getType(), e2.getType()), e1.getValue()+" "+no+" "+e2.getValue());
-                case DIVEQ:
-                    return new Expression(getMajorType(e1.getType(), e2.getType()));
-                case PLUSEQ:
-                    return new Expression(getMajorType(e1.getType(), e2.getType()));
-                case MINUSEQ:
-                    return new Expression(getMajorType(e1.getType(), e2.getType()));
-                case MULTEQ:
-                    return new Expression(getMajorType(e1.getType(), e2.getType()));
-                case PLUSPLUS:
-                    if(!contextFor) {
-                        codeGenerator.generateADDCode("1");
-                        codeGenerator.generateSTCode(e1);
-                    }
-                    return new Expression(e1.getType(), e1.getValue()+" "+no);
-                case MINUSMINUS:
-                    if(!contextFor) {
-                        codeGenerator.generateSUBCode("1");
-                        codeGenerator.generateSTCode(e1);
+	public Expression getExpression(Expression e1, Operation no, Expression e2) throws Exception {
+		Register r;
 
-                    }
-                    return new Expression(e1.getType(), e1.getValue()+" "+no);
-                default:
-                    throw new Exception("ERRO: A operaÁ„o '"+ no+ "' n„o existe!");
+		if (e2 == null || checkTypeCompatibility(e1.getType(), e2.getType())
+				|| checkTypeCompatibility(e2.getType(), e1.getType())) {
+			switch (no) {
+			case AND:
+				return new Expression(new Type("boolean"));
+			case OR:
+				return new Expression(new Type("boolean"));
+			case GTEQ:
+				codeGenerator.generateSUBCode();
+				codeGenerator.generateBLTZCode(3);
+				r = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+				codeGenerator.generateBRCode(2);
+				codeGenerator.generateLDCode(r, new Expression(new Type("boolean"), "0"));
 
-            }
-        }
+				return new Expression(new Type("boolean"), e1.getValue() + " " + no + " " + e2.getValue());
+			case EQEQ:
+				codeGenerator.generateBEQCode(3);
+				r = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "0"));
+				codeGenerator.generateBRCode(2);
+				codeGenerator.generateLDCode(r, new Expression(new Type("boolean"), "1"));
 
-        throw new Exception("ERRO: OperaÁ„o formada pela express„o '"+e1.getValue()+" "+no+" " +e2.getValue() +"' n„o È permitida!");
-    }
-    
-    private Type getMajorType(Type type1, Type type2) {
-        return tiposCompativeis.get(type1.getName()).contains(type2.getName()) ? type1: type2;
-    }
-    
-    public void addVariableType(Type type) throws Exception{
-        for (Variable variable : listVariables) {
-            variable.setType(type);
-            addVariable(variable);
-        }
+				return new Expression(new Type("boolean"), e1.getValue() + " " + no + " " + e2.getValue());
 
-        listVariables = new ArrayList<Variable>();
-    }
-    
-    public void addVariable(Variable variable) throws Exception{
-    	System.out.println("Variable: "+ variable.identifier);
-    	System.out.println("Tipo: "+ variable.getType());
-    	
-    	if (variable.getIdentifier() == metodoChamadoAtual){
-    		checkVariableGlobal(variable);
-            variables.put(variable.getIdentifier(),variable);
-    		
-    		metodoChamadoAtual = "";
-    		return;
-    	}
-    	
-    	if (!(variable.value == null)){
-    		variable.type = variable.getValue().getType();
-    	}
-    	System.out.println("Tipo2: "+ variable.getType());
+			case LTEQ:
+				codeGenerator.generateSUBCode();
+				codeGenerator.generateBGTZCode(3);
+				r = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+				codeGenerator.generateBRCode(2);
+				codeGenerator.generateLDCode(r, new Expression(new Type("boolean"), "0"));
 
-    	
-        if(variablesStackScope.isEmpty()){
-            checkVariableGlobal(variable);
-            variables.put(variable.getIdentifier(),variable);
-        }else{
-            checkVariableLocal(variable);
-            getCurrentScope().addVariable(variable);
-        }
+				return new Expression(new Type("boolean"), e1.getValue() + " " + no + " " + e2.getValue());
+			case LT:
+				codeGenerator.generateSUBCode();
+				if (e1.getContext() == "for") {
+					codeGenerator.generateForCondition("BGEQZ",
+							"forSTRINGCHAVEQUENAOVAIEXISTIRNOUTROCANTOTOP" + forCounter);
+				}
+				codeGenerator.generateBGEQZCode(3);
+				r = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+				codeGenerator.generateBRCode(2);
+				codeGenerator.generateLDCode(r, new Expression(new Type("boolean"), "0"));
 
-        if (variable.getValue() != null){
-            checkVariableAttribution(variable.getIdentifier(), variable.getValue());
-        }
-    }
-    
-    private void checkVariableGlobal(Variable variable) throws Exception{
-        if (checkVariableExistenceGlobal(variable.getIdentifier())){
-            throw new Exception("ERRO VARIABLE. A variavel de nome " + variable.getIdentifier() + " e tipo " + variable.getType().getName() +
-                    " ja existe!");
-        }
-        if (!checkValidExistingType(variable.getType())){
-            if(!variable.getType().getName().equals("null")) {
-                throw new Exception("ERRO VARIABLE. O tipo " + variable.getType().getName() + " da variavel "+ variable.getIdentifier()+
-                        " n√£o existe!");
-            }
-        }
-    }
-    
-    public boolean checkVariableExistenceGlobal(String variableName) {
-        return variables.get(variableName) != null ? true : false;
-    }
-    
-    public boolean checkValidExistingType(Type type) {
-        return listaTipos.contains(type) || tiposCriados.contains(type);
-    }
-    
-    private void checkVariableLocal(Variable variable) throws Exception{
-        if (checkVariableExistenceLocal(variable.getIdentifier())){
-            throw new Exception("ERRO VARIABLE. A variavel de nome " + variable.getIdentifier() + " e tipo " + variable.getType().getName() +
-                    " ja existe!");
-        }
-        if (!checkValidExistingType(variable.getType())){
-            if(!variable.getValue().getType().getName().equals("null")){
-                throw new Exception("ERRO VARIABLE. O tipo " + variable.getType().getName() + " da variavel "+ variable.getIdentifier()+
-                        " n√£o existe!");
-            }
-        }
-    }
-    
-    public boolean checkVariableExistenceLocal(String variableName) {
-        if(!variablesStackScope.isEmpty() && getCurrentScope().getVariable().get(variableName) != null){
-            return true;
-        }else{
-            return false;
-        }
-    }
-    
-    public void checkVariableAttribution(String id, Expression expression) throws Exception{
-        if (!checkVariableExistence(id)){
-            throw new Exception("ERRO: A variavel chamada " +id+ " e com valor "+ expression.getValue()+" n√£o existe!");
-        }
-        if (!checkValidExistingType(expression.getType())){
-            if(!expression.getType().getName().equals("null")) {
-                throw new Exception("ERRO: O tipo " + expression.getType().getName()+" atribuido a variavel "+ id + " n√£o existe!");
-            }
-        }
-        Type identifierType = findVariableByIdentifier(id).getType();
-        if (!checkTypeCompatibility(identifierType, expression.getType())){
-            String exceptionMessage = String.format("ERRO: Tipos incompativeis! %s n√£o e  compativel com %s", identifierType, expression.getType());
-            throw new Exception(exceptionMessage);
-        }
-    }
-    
-    public boolean checkVariableExistence(String variableName) {
-        if(!variablesStackScope.isEmpty() && getCurrentScope().getVariable().get(variableName) != null){
-            return true;
-        }else if(variables.get(variableName) != null){
-            return true;
-        }else{
-            return false;
-        }
-    }
-    
-    public void validateVariableName(String variableName) throws Exception{
-    	Function tmp = new Function("", null);
-    	
-    	for (Function f : functions){
-    		tmp = f;
-    		if (tmp.getName().equals(variableName)){
-    			metodoChamadoAtual = variableName;
-        		listParamsMetodoChamado = new ArrayList<Object>();
+				return new Expression(new Type("boolean"), e1.getValue() + " " + no + " " + e2.getValue());
+			case GT:
+				codeGenerator.generateSUBCode();
+				codeGenerator.generateBLEQZCode(3);
+				r = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+				codeGenerator.generateBRCode(2);
+				codeGenerator.generateLDCode(r, new Expression(new Type("boolean"), "0"));
 
-    			return;
-    		}
-    	}
-    	if (!checkVariableExistence(variableName)){
-            throw new Exception("ERRO: A variavel: " + variableName + " n„o foi declarada!");
-        }
-    }
-    
-    public boolean checkMethodParams(Object exp) throws Exception{
-        boolean result = true;
-    	
-    	if (metodoChamadoAtual == exp.toString()){
-    		
-    		Function tmp = new Function("", null);
-        	
-        	for (Function f : functions){
-        		tmp = f;
-        		if (tmp.getName().equals(metodoChamadoAtual)){
-        			break;
-        		}
-        	}
-        	
-    		if (tmp.getParams().size() != listParamsMetodoChamado.size()){
-    			throw new Exception("ERRO: Numero de parametros do metodo nao È compativel");
-    		}
+				
+				return new Expression(new Type("boolean"), e1.getValue() + " " + no + " " + e2.getValue());
+			case NOTEQ:
+				codeGenerator.generateBEQCode(3);
+				r = codeGenerator.generateLDCode(new Expression(new Type("boolean"), "1"));
+				codeGenerator.generateBRCode(2);
+				codeGenerator.generateLDCode(r, new Expression(new Type("boolean"), "0"));
+				return new Expression(new Type("boolean"), e1.getValue() + " " + no + " " + e2.getValue());
+			case NOT:
+				return new Expression(new Type("boolean"));
+			case XOREQ:
+				return new Expression(new Type("boolean"));
+			case XOR:
+				return new Expression(new Type("boolean"));
+			case OROR:
+				return new Expression(new Type("boolean"));
+			case ANDAND:
+				return new Expression(new Type("boolean"));
+			case ANDEQ:
+				return new Expression(new Type("boolean"));
+			case OREQ:
+				return new Expression(new Type("boolean"));
+			case OROREQ:
+				return new Expression(new Type("boolean"));
+			case MINUS:
 
-    		for (int i = 0; i < tmp.getParams().size(); i++){
-    			Type tipo1 = ((Expression) listParamsMetodoChamado.get(i)).getType();
-    			Type tipo2 = ((Variable)tmp.getParams().get(i)).getType();
+				codeGenerator.generateSUBCode();
 
-	    		if (! tipo1.toString().equals(tipo2.toString()) ){
-	    			throw new Exception("ERRO: O tipo passado no metodo nao È compativel");
-	    			
-	    		}else{
-	    			result = false;
-	    		}
-    		}
-        }
-        return result;
-    }
-    
-    public Variable getVariableFromMethod(String i){
-    	Function tmp = new Function("", null);
-    	
-    	for (Function f : functions){
-    		tmp = f;
-    		if (tmp.getName().equals(metodoChamadoAtual)){
-    			break;
-    		}
-    	}
-    	
-    	Variable result = new Variable(i, tmp.getDeclaredReturnType());
-    	
-    	
-    	return result;
-    }
-    
-    public Variable findVariableByIdentifier(String variableName){
-        if(!variablesStackScope.isEmpty() && getCurrentScope().getVariable().get(variableName) != null){
-            return getCurrentScope().getVariable().get(variableName);
-        }else{
-            return variables.get(variableName);
-        }
+				return new Expression(getMajorType(e1.getType(), e2.getType()),
+						e1.getValue() + " " + no + " " + e2.getValue());
+			case MULT:
+				codeGenerator.generateMULCode();
+				return new Expression(getMajorType(e1.getType(), e2.getType()),
+						e1.getValue() + " " + no + " " + e2.getValue());
+			case MOD:
+				codeGenerator.generateMODCode();
+				return new Expression(getMajorType(e1.getType(), e2.getType()),
+						e1.getValue() + " " + no + " " + e2.getValue());
+			case PLUS:
+				codeGenerator.generateADDCode();
+				return new Expression(getMajorType(e1.getType(), e2.getType()),
+						e1.getValue() + " " + no + " " + e2.getValue());
+			case DIV:
+				codeGenerator.generateDIVCode();
+				return new Expression(getMajorType(e1.getType(), e2.getType()),
+						e1.getValue() + " " + no + " " + e2.getValue());
+			case DIVEQ:
+				return new Expression(getMajorType(e1.getType(), e2.getType()));
+			case PLUSEQ:
+				return new Expression(getMajorType(e1.getType(), e2.getType()));
+			case MINUSEQ:
+				return new Expression(getMajorType(e1.getType(), e2.getType()));
+			case MULTEQ:
+				return new Expression(getMajorType(e1.getType(), e2.getType()));
+			case PLUSPLUS:
 
-    }
-    
-    public boolean checkTypeCompatibility(Type leftType, Type rightType) {
-        if (leftType.equals(rightType)){
-            return true;
-        } else {
-            List<String> tipos = tiposCompativeis.get(leftType.getName());
-            if(tipos == null) return false;
-            return tipos.contains(rightType.getName());
-        }
-    }
-    
-    public VariablesScope getCurrentScope() {
-        return variablesStackScope.peek();
-    }
-    
-    private void createNewScope(VariablesScope scope) {
-    	variablesStackScope.push(scope);
-    }
-    
-    public void checkMethod(Type type, String functionName, ArrayList<Param> params) throws Exception {
-    	
-    	/* Zera lista de parametros */
-    	listParams = new ArrayList<Object>();
-    	
-    	System.out.println("funcao: "+type);
-    	
-        if(type == null){
-            throw new Exception("ERRO FUNCTION: O mÈtodo "+ functionName +
-                    " n„o possui tipo associado");
-        }
-        Function temp = new Function(functionName, params);
-        temp.setDeclaredReturnedType(type);
-        if(checkFunctionExistence(temp)){
-            if(params != null){
-                checkExistingParameter(params);
-            }
-            String keyFunc = functionName + " ";
-            if(params != null) {
-                for (int i = 0; i < params.size(); i++) {
-                	Variable p = (Variable) params.get(i);
-                	keyFunc += p.getType().getName();
-                }
-            }
-            //codeGenerator.addFunctionAddress(keyFunc);
-            addFunctionAndNewScope(temp);
-        }
-    }
-    
-    public void checkMethodReturn(Expression e) throws Exception{
-    	
-    	Function tmp = new Function("", null);
-    	
-    	for (Function f : functions){
-    		tmp = f;
-    	}
-    	    	
-    	if (!e.getType().equals(tmp.getDeclaredReturnType()))
-    		 throw new Exception("ERRO FUNCTION: O tipo de retorno: <"+ e.getType() +"> n„o pode ser associado ao metodo de tipo: <" + tmp.getDeclaredReturnType() + ">.");
-    }
-    
-    
-    
-    public void addFunctionAndNewScope(Function f) throws Exception {
-        functions.add(f);
-        createNewScope(f);
-        if(f.getParams() != null) {
-            
-        	for (int i = 0; i < f.getParams().size(); i++) {
-            	Variable p = (Variable) f.getParams().get(i);
-            	addVariable(p);
-            }
+				codeGenerator.generateADDCode("1");
+				codeGenerator.generateSTCode(e1);
 
-        }
-    }
-    
-    private void checkExistingParameter(ArrayList<Param> params) throws Exception {
-        for(int i=0; i<params.size();i++){
-            for(int k=i+1;k<params.size();k++){
-                if( ((Variable)params.get(i)).getIdentifier().equals(((Variable)params.get(k)).getIdentifier())){
-                    throw new Exception("ERRO PARAMETERs: O parametro: "+ ((Variable)params.get(k)).getIdentifier() + " ja foi definido.");
-                }
-            }
-        }
-    }
-	
-    public boolean checkFunctionExistence(Function temp) throws Exception {
-        for(Function fun : functions){
-            if(fun.getName().equals(temp.getName())) {
-                if(!fun.getDeclaredReturnType().getName().equals(temp.getDeclaredReturnType().getName())){
-                    throw new Exception("ERRO FUNCTION: O m√©todo "+temp.getName()+" ja foi declarado com um tipo de retorno diferente!");
-                }
-                if(temp.equals(fun)){
-                    throw new Exception("ERRO FUNCTION: O metodo " + temp.getName() + " ja foi declarado com esses mesmos parametros!");
-                }
+				return new Expression(e1.getType(), e1.getValue() + " " + no);
+			case MINUSMINUS:
 
-            }
-        }
-        return true;
-    }
-    
+				codeGenerator.generateSUBCode("1");
+				codeGenerator.generateSTCode(e1);
+
+				return new Expression(e1.getType(), e1.getValue() + " " + no);
+			default:
+				throw new Exception("ERRO: A operaÁ„o '" + no + "' n„o existe!");
+
+			}
+		}
+
+		throw new Exception("ERRO: OperaÁ„o formada pela express„o '" + e1.getValue() + " " + no + " " + e2.getValue()
+				+ "' n„o È permitida!");
+	}
+
+	private Type getMajorType(Type type1, Type type2) {
+		return tiposCompativeis.get(type1.getName()).contains(type2.getName()) ? type1 : type2;
+	}
+
+	public void addVariableType(Type type) throws Exception {
+		for (Variable variable : listVariables) {
+			variable.setType(type);
+			addVariable(variable);
+		}
+
+		listVariables = new ArrayList<Variable>();
+	}
+
+	public void addVariable(Variable variable) throws Exception {
+		System.out.println("Variable: " + variable.identifier);
+		System.out.println("Tipo: " + variable.getType());
+
+		if (variable.getIdentifier() == metodoChamadoAtual) {
+			checkVariableGlobal(variable);
+			variables.put(variable.getIdentifier(), variable);
+
+			metodoChamadoAtual = "";
+			return;
+		}
+
+		if (!(variable.value == null)) {
+			variable.type = variable.getValue().getType();
+		}
+		System.out.println("Tipo2: " + variable.getType());
+
+		if (variablesStackScope.isEmpty()) {
+			checkVariableGlobal(variable);
+			variables.put(variable.getIdentifier(), variable);
+		} else {
+			checkVariableLocal(variable);
+			getCurrentScope().addVariable(variable);
+		}
+
+		if (variable.getValue() != null) {
+			checkVariableAttribution(variable.getIdentifier(), variable.getValue());
+		}
+	}
+
+	private void checkVariableGlobal(Variable variable) throws Exception {
+		if (checkVariableExistenceGlobal(variable.getIdentifier())) {
+			throw new Exception("ERRO VARIABLE. A variavel de nome " + variable.getIdentifier() + " e tipo "
+					+ variable.getType().getName() + " ja existe!");
+		}
+		if (!checkValidExistingType(variable.getType())) {
+			if (!variable.getType().getName().equals("null")) {
+				throw new Exception("ERRO VARIABLE. O tipo " + variable.getType().getName() + " da variavel "
+						+ variable.getIdentifier() + " n√£o existe!");
+			}
+		}
+	}
+
+	public boolean checkVariableExistenceGlobal(String variableName) {
+		return variables.get(variableName) != null ? true : false;
+	}
+
+	public boolean checkValidExistingType(Type type) {
+		return listaTipos.contains(type) || tiposCriados.contains(type);
+	}
+
+	private void checkVariableLocal(Variable variable) throws Exception {
+		if (checkVariableExistenceLocal(variable.getIdentifier())) {
+			throw new Exception("ERRO VARIABLE. A variavel de nome " + variable.getIdentifier() + " e tipo "
+					+ variable.getType().getName() + " ja existe!");
+		}
+		if (!checkValidExistingType(variable.getType())) {
+			if (!variable.getValue().getType().getName().equals("null")) {
+				throw new Exception("ERRO VARIABLE. O tipo " + variable.getType().getName() + " da variavel "
+						+ variable.getIdentifier() + " n√£o existe!");
+			}
+		}
+	}
+
+	public boolean checkVariableExistenceLocal(String variableName) {
+		if (!variablesStackScope.isEmpty() && getCurrentScope().getVariable().get(variableName) != null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void checkVariableAttribution(String id, Expression expression) throws Exception {
+		if (!checkVariableExistence(id)) {
+			throw new Exception(
+					"ERRO: A variavel chamada " + id + " e com valor " + expression.getValue() + " n√£o existe!");
+		}
+		if (!checkValidExistingType(expression.getType())) {
+			if (!expression.getType().getName().equals("null")) {
+				throw new Exception("ERRO: O tipo " + expression.getType().getName() + " atribuido a variavel " + id
+						+ " n√£o existe!");
+			}
+		}
+		Type identifierType = findVariableByIdentifier(id).getType();
+		if (!checkTypeCompatibility(identifierType, expression.getType())) {
+			String exceptionMessage = String.format("ERRO: Tipos incompativeis! %s n√£o e  compativel com %s",
+					identifierType, expression.getType());
+			throw new Exception(exceptionMessage);
+		}
+	}
+
+	public boolean checkVariableExistence(String variableName) {
+		if (!variablesStackScope.isEmpty() && getCurrentScope().getVariable().get(variableName) != null) {
+			return true;
+		} else if (variables.get(variableName) != null) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public void validateVariableName(String variableName) throws Exception {
+		Function tmp = new Function("", null);
+
+		for (Function f : functions) {
+			tmp = f;
+			if (tmp.getName().equals(variableName)) {
+				metodoChamadoAtual = variableName;
+				listParamsMetodoChamado = new ArrayList<Object>();
+
+				return;
+			}
+		}
+		if (tiposCompativeis.containsKey(variableName)) {
+			return;
+		} else if (!checkVariableExistence(variableName)) {
+			throw new Exception("ERRO: A variavel: " + variableName + " n„o foi declarada!");
+		}
+	}
+
+	public boolean checkMethodParams(Object exp) throws Exception {
+		boolean result = true;
+		if (exp == null) {
+			return result;
+		}
+		if (metodoChamadoAtual == exp.toString()) {
+
+			Function tmp = new Function("", null);
+
+			for (Function f : functions) {
+				tmp = f;
+				if (tmp.getName().equals(metodoChamadoAtual)) {
+					break;
+				}
+			}
+
+			if (tmp.getParams().size() != listParamsMetodoChamado.size()) {
+				throw new Exception("ERRO: Numero de parametros do metodo nao È compativel");
+			}
+
+			for (int i = 0; i < tmp.getParams().size(); i++) {
+				Type tipo1 = ((Expression) listParamsMetodoChamado.get(i)).getType();
+				Type tipo2 = ((Variable) tmp.getParams().get(i)).getType();
+
+				if (!tipo1.toString().equals(tipo2.toString())) {
+					throw new Exception("ERRO: O tipo passado no metodo nao È compativel");
+
+				} else if (tiposCompativeis.get(tipo2).contains(tipo1)) {
+					result = true;
+				} else {
+					result = false;
+				}
+			}
+		}
+		return result;
+	}
+
+	public Variable getVariableFromMethod(String i) {
+		Function tmp = new Function("", null);
+
+		for (Function f : functions) {
+			tmp = f;
+			if (tmp.getName().equals(metodoChamadoAtual)) {
+				break;
+			}
+		}
+
+		Variable result = new Variable(i, tmp.getDeclaredReturnType());
+
+		return result;
+	}
+
+	public Variable findVariableByIdentifier(String variableName) {
+		if (!variablesStackScope.isEmpty() && getCurrentScope().getVariable().get(variableName) != null) {
+			return getCurrentScope().getVariable().get(variableName);
+		} else {
+			return variables.get(variableName);
+		}
+
+	}
+
+	public boolean checkTypeCompatibility(Type leftType, Type rightType) {
+		if (leftType.equals(rightType)) {
+			return true;
+		} else {
+			List<String> tipos = tiposCompativeis.get(leftType.getName());
+			if (tipos == null)
+				return false;
+			return tipos.contains(rightType.getName());
+		}
+	}
+
+	public VariablesScope getCurrentScope() {
+		return variablesStackScope.peek();
+	}
+
+	private void createNewScope(VariablesScope scope) {
+		variablesStackScope.push(scope);
+	}
+
+	public void checkMethod(Type type, String functionName, ArrayList<Param> params) throws Exception {
+
+		/* Zera lista de parametros */
+		listParams = new ArrayList<Object>();
+
+		System.out.println("funcao: " + type);
+
+		if (type == null) {
+			throw new Exception("ERRO FUNCTION: O mÈtodo " + functionName + " n„o possui tipo associado");
+		}
+		Function temp = new Function(functionName, params);
+		temp.setDeclaredReturnedType(type);
+		temp.setFather(classeChamadaAtual);
+		if (checkFunctionExistence(temp)) {
+			if (params != null) {
+				checkExistingParameter(params);
+			}
+			String keyFunc = functionName + " ";
+			if (params != null) {
+				for (int i = 0; i < params.size(); i++) {
+					Variable p = (Variable) params.get(i);
+					keyFunc += p.getType().getName();
+				}
+			}
+			// codeGenerator.addFunctionAddress(keyFunc);
+			addFunctionAndNewScope(temp);
+		}
+	}
+
+	public void checkMethodReturn(Expression e) throws Exception {
+
+		Function tmp = new Function("", null);
+
+		for (Function f : functions) {
+			tmp = f;
+		}
+
+		if (!e.getType().equals(tmp.getDeclaredReturnType()))
+			throw new Exception("ERRO FUNCTION: O tipo de retorno: <" + e.getType()
+					+ "> n„o pode ser associado ao metodo de tipo: <" + tmp.getDeclaredReturnType() + ">.");
+	}
+
+	public void addFunctionAndNewScope(Function f) throws Exception {
+		functions.add(f);
+		createNewScope(f);
+		if (f.getParams() != null) {
+
+			for (int i = 0; i < f.getParams().size(); i++) {
+				Variable p = (Variable) f.getParams().get(i);
+				addVariable(p);
+			}
+
+		}
+	}
+
+	private void checkExistingParameter(ArrayList<Param> params) throws Exception {
+		for (int i = 0; i < params.size(); i++) {
+			for (int k = i + 1; k < params.size(); k++) {
+				if (((Variable) params.get(i)).getIdentifier().equals(((Variable) params.get(k)).getIdentifier())) {
+					throw new Exception("ERRO PARAMETERs: O parametro: " + ((Variable) params.get(k)).getIdentifier()
+							+ " ja foi definido.");
+				}
+			}
+		}
+	}
+
+	public boolean checkFunctionExistence(Function temp) throws Exception {
+		boolean resposta = false;
+		for (Function fun : functions) {
+			if (fun.getName().equals(temp.getName())) {
+				if (fun.getParams().size() == temp.getParams().size()) {
+					for (int i = 0; i < temp.getParams().size(); i++) {
+						Type tipo1 = ((Variable) fun.getParams().get(i)).getType();
+						Type tipo2 = ((Variable) temp.getParams().get(i)).getType();
+
+						if (tipo1.toString() == tipo2.toString()) {
+							resposta = true;
+						} else {
+							resposta = false;
+							break;
+						}
+					}
+
+				}
+				if (resposta) {
+					throw new Exception("ERRO FUNCTION: O metodo " + temp.getName()
+							+ " ja foi declarado com os mesmos parametros!");
+				}
+				// if(temp.equals(fun)){
+				// throw new Exception("ERRO FUNCTION: O metodo " +
+				// temp.getName() + " ja foi declarado com esses mesmos
+				// parametros!");
+				// }
+
+			}
+		}
+		return true;
+	}
+
 	public static <T> ArrayList<T> createList(T... p) {
 		ArrayList<T> list = new ArrayList<T>();
-		for (int i = 0 ; i < p.length ; i++) {
+		for (int i = 0; i < p.length; i++) {
 			list.add(p[i]);
 		}
 
 		return list;
 	}
-	
-    public <T> List<Object> addParamList(T... p) {
-    	
-		for (int i = 0 ; i < p.length ; i++) {
+
+	public <T> List<Object> addParamList(T... p) {
+
+		for (int i = 0; i < p.length; i++) {
 			listParams.add(p[i]);
 		}
-		
+
 		return listParams;
 	}
-	
-    public <T> List<Object> addArgList(T... p) {
-    	
-		for (int i = 0 ; i < p.length ; i++) {
+
+	public <T> List<Object> addArgList(T... p) {
+
+		for (int i = 0; i < p.length; i++) {
 			listParamsMetodoChamado.add(p[i]);
 		}
-		
+
 		return listParamsMetodoChamado;
 	}
-    
-    public boolean checkObject(Object e) throws Exception {
+
+	public boolean checkObject(Object e) throws Exception {
 		boolean result = true;
-    	try{
-    		( (Expression) e).getType();
-		}
-    	catch (Exception a){
+		try {
+			((Expression) e).getType();
+		} catch (Exception a) {
 			result = false;
 		}
-    	    	
-    	return result;
-    	
-    }
-	
-    public boolean checkObjectReturn(Object e) throws Exception {
+
+		return result;
+
+	}
+
+	public boolean checkObjectReturn(Object e) throws Exception {
 		boolean result = true;
-    	try{
-    		( (Expression) e).getType();
-		}
-    	catch (Exception a){
+		try {
+			((Expression) e).getType();
+		} catch (Exception a) {
 			result = false;
 		}
-    	
-    	checkVariableReturn(e);
-    	
-    	return result;
-    	
-    }
-    
-    public void  checkVariableReturn(Object e) throws Exception {
+
+		checkVariableReturn(e);
+
+		return result;
+
+	}
+
+	public void checkVariableReturn(Object e) throws Exception {
 		boolean result = true;
 
-    	Variable var = findVariableByIdentifier(e.toString());
-    	
-    	Function tmp = null;
-    	for (Function f : functions){
-    		tmp = f;
-    	}
-    	    	
-    	if (!var.getType().equals(tmp.getDeclaredReturnType()))
-    		 throw new Exception("ERRO FUNCTION: O tipo de retorno: <"+ var.getType() +"> n„o pode ser associado ao metodo de tipo: <" + tmp.getDeclaredReturnType() + ">.");
+		Variable var = findVariableByIdentifier(e.toString());
 
-    	
-    }
-    
-    public void addType(Type type){
-        if (type != null){
-            if(type.getName().contains(".")){
-                String[] typeNames = type.getName().split(".");
-                String typeName = typeNames[typeNames.length-1];
-                type.setName(typeName);
-            }
-        }
+		Function tmp = null;
+		for (Function f : functions) {
+			tmp = f;
+		}
 
-        if(!tiposCriados.contains(type)){
-        	tiposCriados.add(type);
-            List<String> tipos = new ArrayList<String>();
-            tipos.add(type.getName());
-            tiposCompativeis.put(type.getName(), tipos);
-        }
-    }
-    
-    public void addSupertype(String className, String superClassName) throws Exception{
-        if (superClassName != null) {
-            if (tiposCompativeis.containsKey(superClassName)){
-                tiposCompativeis.get(superClassName).add(className);
-                return;
-            }
+		if (!var.getType().equals(tmp.getDeclaredReturnType()))
+			throw new Exception("ERRO FUNCTION: O tipo de retorno: <" + var.getType()
+					+ "> n„o pode ser associado ao metodo de tipo: <" + tmp.getDeclaredReturnType() + ">.");
 
-            throw new Exception("ERRO: A super classe " + superClassName + "n„o existe!");
-        }
-    }
-    
-    public void addInterface(Type type){
-        if (type != null){
-            if(type.getName().contains(".")){
-                String[] typeNames = type.getName().split(".");
-                String typeName = typeNames[typeNames.length-1];
-                type.setName(typeName);
-            }
-        }
+	}
 
-        if(!tiposCriados.contains(type)){
-        	tiposCriados.add(type);
-            List<String> tipos = new ArrayList<String>();
-            tipos.add(type.getName());
-            tiposCompativeis.put(type.getName(), tipos);
-        }
-    }
-    
-    /*public void addInterface(String className, String inter) throws Exception{
-        if (inter != null) {
-            if (tiposCompativeis.containsKey(inter)){
-                tiposCompativeis.get(inter).add(className);
-                return;
-            }
+	public void addType(Type type) {
+		variablesStackScope = new Stack<VariablesScope>();
+		variables = new HashMap<String, Variable>();
+		if (type != null) {
+			classeChamadaAtual = type.getName();
+			if (type.getName().contains(".")) {
+				String[] typeNames = type.getName().split(".");
+				String typeName = typeNames[typeNames.length - 1];
+				type.setName(typeName);
+			}
+		}
 
-            throw new Exception("ERRO: A interface " + inter + "n„o existe!");
-        }
-    }*/
-    
-    public void verifyPoliform(String classe) {
-    	
-    }
-    
+		if (!tiposCriados.contains(type)) {
+			tiposCriados.add(type);
+			List<String> tipos = new ArrayList<String>();
+			tipos.add(type.getName());
+			tiposCompativeis.put(type.getName(), tipos);
+		}
+	}
+
+	public void addSupertype(String className, String superClassName) throws Exception {
+		if (superClassName != null) {
+			if (tiposCompativeis.containsKey(superClassName)) {
+				tiposCompativeis.get(superClassName).add(className);
+				return;
+			}
+
+			throw new Exception("ERRO: A super classe " + superClassName + "n„o existe!");
+		}
+	}
+
+	public void addInterface(Type type) {
+		variablesStackScope = new Stack<VariablesScope>();
+		variables = new HashMap<String, Variable>();
+		if (type != null) {
+			classeChamadaAtual = type.getName();
+			if (type.getName().contains(".")) {
+				String[] typeNames = type.getName().split(".");
+				String typeName = typeNames[typeNames.length - 1];
+				type.setName(typeName);
+			}
+		}
+
+		if (!tiposCriados.contains(type)) {
+			tiposCriados.add(type);
+			List<String> tipos = new ArrayList<String>();
+			tipos.add(type.getName());
+			tiposCompativeis.put(type.getName(), tipos);
+		}
+	}
+
+	/*
+	 * public void addInterface(String className, String inter) throws
+	 * Exception{ if (inter != null) { if (tiposCompativeis.containsKey(inter)){
+	 * tiposCompativeis.get(inter).add(className); return; }
+	 * 
+	 * throw new Exception("ERRO: A interface " + inter + "n„o existe!"); } }
+	 */
+
+	public void verifyPoliform(String classe) {
+
+	}
 
 }

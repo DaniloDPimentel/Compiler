@@ -3,7 +3,7 @@ package Tests;
 import main.*;
 
 
-public class ClasseTest implements Tests {
+public class ClasseTest {
        
      public int funcaoTest2(int danilo1, int dan1){
 		int a =3;
